@@ -1,8 +1,41 @@
 import { createBrowserRouter } from "react-router-dom";
+import DashboardLayout from "../layout/DashboardLayout";
 
-export default router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: "/",
-    element: <div>Hello world!</div>,
+    element: <DashboardLayout />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <>Dashboard</>,
+      },
+      {
+        path: "/call-logs",
+        element: <>Call Logs</>,
+      },
+      {
+        path: "/call-transfer",
+        element: <>Call Transfer</>,
+      },
+      {
+        path: "/pricing-list",
+        element: <>Pricing List</>,
+      },
+      {
+        path: "/appointment",
+        element: <>Appointment</>,
+      },
+      {
+        path: "/notifications",
+        element: <>Notifications</>,
+      },
+      {
+        path: "/setting",
+        element: <>Setting</>,
+      },
+    ],
   },
 ]);
+
+export default router;
