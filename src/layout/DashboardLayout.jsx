@@ -13,7 +13,7 @@ export default function DashboardLayout() {
         <Topbar />
       </header>
 
-      <main className="bg-blue-400 p-6 overflow-y-auto">
+      <main className="bg-[#162456] p-6 overflow-y-auto">
         <Outlet />
       </main>
     </div>

@@ -1,5 +1,4 @@
 import { Icon } from "@iconify/react";
-import React from "react";
 import { NavLink } from "react-router-dom";
 
 export default function NavBtn({path, title, icon}) {
@@ -7,7 +6,7 @@ export default function NavBtn({path, title, icon}) {
     <NavLink to={path}
       className="relative flex items-center gap-4 p-4 rounded-xl
   bg-linear-to-b from-[#1b2b55] to-[#0b1635]
-  border border-white shadow-[0_0_40px_rgba(120,170,255,0.35)]
+  border-2 border-white/70 shadow-[0_0_40px_rgba(120,170,255,0.35)]
   backdrop-blur-lg
   overflow-hidden
   duration-150

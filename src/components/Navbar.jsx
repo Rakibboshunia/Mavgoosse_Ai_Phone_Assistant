@@ -74,10 +74,34 @@ export default function Navbar() {
           </ul>
         </div>
 
-        <button className="flex items-center justify-center gap-4 bg-red-900 text-white text-2xl py-3 px-6 rounded-xl">
-          <Icon icon={"heroicons-outline:logout"} width={28} height={28} />
-          <span>Logout</span>
-        </button>
+        <button className="
+  group
+  flex items-center justify-center gap-4
+  bg-red-900 text-white text-2xl
+  py-3 px-6 rounded-xl
+  transition-all duration-700 ease-in-out
+">
+
+  <Icon
+    icon="heroicons-outline:logout"
+    width={28}
+    height={28}
+    className="
+      transition-transform duration-700 ease-in-out
+      group-hover:translate-x-18
+    "
+  />
+
+  <span
+    className="
+      transition-transform duration-700 ease-in-out
+      group-hover:-translate-x-15
+    "
+  >
+    Logout
+  </span>
+</button>
+
       </div>
     </div>
   );
