@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
 import AuthContainer from "../../components/AuthContainer";
-import FormInput from "../../components/FormInput";
 
 export default function Registration() {
   const {
@@ -18,14 +17,15 @@ export default function Registration() {
 
           <div className="text-center space-y-1.5 py-9">
             <h4 className="text-2xl font-semibold">AI Call Admin</h4>
-            <p className="text-xl text-[#99A1AF]">Sign in to manage your dashboard</p>
+            <p className="text-xl text-[#99A1AF]">
+              Sign in to manage your dashboard
+            </p>
           </div>
         </div>
 
         <div>
           <form onSubmit={handleSubmit((data) => console.log(data))}>
             <input {...register("firstName")} />
-            <FormInput/>
             <input {...register("age", { pattern: /\d+/ })} />
             {errors.age && <p>Please enter number for age.</p>}
             <input type="submit" />
