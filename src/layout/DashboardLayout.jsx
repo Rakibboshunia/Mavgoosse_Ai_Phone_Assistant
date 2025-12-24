@@ -19,7 +19,7 @@ export default function DashboardLayout() {
         <Topbar />
       </header>
 
-      <main className="bg-[#162456] p-6 overflow-y-auto">
+      <main className="bg-[#162456] p-6 overflow-y-auto hide-scrollbar">
         <Outlet />
       </main>
     </div>
