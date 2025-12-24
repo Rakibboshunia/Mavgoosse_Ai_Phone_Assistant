@@ -38,6 +38,10 @@ const router = createBrowserRouter([
         element: <PricingList />,
       },
       {
+        path: "/pricing-management",
+        element: <PricingList />,
+      },
+      {
         path: "/appointment",
         element: <Appointment />,
       },
@@ -50,7 +54,7 @@ const router = createBrowserRouter([
         element: <Setting />,
       },
       {
-        path: "/ai-settings",
+        path: "/ai-behavior-settings",
         element: <AISettings />,
       },
       {
