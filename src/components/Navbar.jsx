@@ -3,7 +3,40 @@ import { Icon } from "@iconify/react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import NavBtn from "./NavBtn";
 import { AuthContext } from "../provider/AuthContext";
-import StoreSelector from "./StoreSelector";
+
+
+const stores = [
+  {
+    id: 1,
+    name: 'Downtown Manhattan',
+    address: '123 Broadway, NY',
+    status: 'online'
+  },
+  {
+    id: 2,
+    name: 'Brooklyn Heights',
+    address: '456 Atlantic Ave, NY',
+    status: 'online'
+  },
+  {
+    id: 3,
+    name: 'Queens Center',
+    address: '789 Queens Blvd, NY',
+    status: 'online'
+  },
+  {
+    id: 4,
+    name: 'Jersey City',
+    address: '321 Newark Ave, NJ',
+    status: 'offline'
+  },
+  {
+    id: 5,
+    name: 'Boston Downtown',
+    address: '555 Boylston St, MA',
+    status: 'online'
+  }
+];
 
 export default function Navbar({ onClose }) {
   const location = useLocation();
@@ -64,7 +97,7 @@ export default function Navbar({ onClose }) {
       path: "/user-management",
     },
   ];
-  const StoreLinks =[
+  const StoreLinks = [
     {
       title: "Pricing list",
       icon: "ph:currency-dollar-bold",
@@ -94,7 +127,7 @@ export default function Navbar({ onClose }) {
   };
 
   return (
-    <div className="w-full p-5 flex flex-col justify-between h-screen">
+    <div className="w-full p-5 flex flex-col justify-between h-screen relative">
       {/* Close button for mobile */}
       {onClose && (
         <button
@@ -183,13 +216,44 @@ export default function Navbar({ onClose }) {
         </span>
       </button>
 
-      {/* Store Selector Modal */}
-      <StoreSelector
-        isOpen={isStoreModalOpen}
-        onClose={() => setIsStoreModalOpen(false)}
-        selectedStore={selectedStore}
-        onSelectStore={selectStore}
-      />
+      {/* Store Selector Dropdown */}
+      {isStoreModalOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsStoreModalOpen(false)}></div>
+          <div className="absolute top-[180px] left-5 right-5 z-20 bg-[#0F172B] border-2 border-[#2B7FFF33] rounded-xl shadow-2xl overflow-hidden">
+            <div className="max-h-[300px] overflow-y-auto hide-scrollbar">
+              {stores.map((store) => (
+                <div
+                  key={store.id}
+                  onClick={() => {
+                    selectStore(store);
+                    setIsStoreModalOpen(false);
+                  }}
+                  className={`p-3 cursor-pointer transition-all border-b border-[#2B7FFF10] last:border-0 ${selectedStore?.id === store.id
+                    ? 'bg-[#2B7FFF20]'
+                    : 'hover:bg-[#2B7FFF10]'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 bg-[#2B7FFF15] rounded-lg flex items-center justify-center shrink-0">
+                      <Icon icon="mdi:map-marker" className="text-[#2B7FFF]" width={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-white font-medium text-sm truncate">{store.name}</h3>
+                        {selectedStore?.id === store.id && (
+                          <Icon icon="mdi:check" className="text-[#2B7FFF]" width={16} />
+                        )}
+                      </div>
+                      <p className="text-[#90A1B9] text-[10px] truncate">{store.address}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
