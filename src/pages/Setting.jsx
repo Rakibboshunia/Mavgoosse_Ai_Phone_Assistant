@@ -15,12 +15,10 @@ export default function Setting() {
   const handleSaveProfile = (e) => {
     e.preventDefault();
     setIsEditing(false);
-    // Logic to save profile would go here
   };
 
   const handleSavePassword = (e) => {
     e.preventDefault();
-    // Logic to save password would go here
   };
 
   return (
