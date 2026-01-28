@@ -1,4 +1,4 @@
-// utils/appointmentsAdapter.js
+
 
 export const adaptAppointment = (app) => {
   const dateObj = new Date(app.scheduled_at);

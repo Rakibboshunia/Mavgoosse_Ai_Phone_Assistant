@@ -9,13 +9,11 @@ export const adaptCall = (call) => {
   };
 
   return {
-    // IDs
+
     id: call.id,
 
-    // Phone
     phoneNumber: call.phone_number || "-", 
 
-    // Date & Time (UI safe)
     date: start ? start.toLocaleDateString() : "-",
     time: start
       ? start.toLocaleTimeString([], {
@@ -24,20 +22,16 @@ export const adaptCall = (call) => {
         })
       : "-",
 
-    // Duration
     duration: call.duration || "-",
 
-    // Call type
     callType: call.call_type,
     status: statusMap[call.call_type] || call.call_type || "-",
 
-    // Outcome
     outcomeRaw: call.outcome,
     outcome: call.outcome
       ? call.outcome.replaceAll("_", " ")
       : "-",
 
-    // Issue
     issueId: call.issue,
     issueType: call.issue_name || "Unknown",
 
