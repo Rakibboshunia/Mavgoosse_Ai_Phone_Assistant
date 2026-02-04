@@ -4,21 +4,25 @@ import { removeAllTokens } from "../utils/cookies";
 import { getProfileApi } from "../libs/auth.api";
 
 const AuthProvider = ({ children }) => {
+  /* ================= USER ================= */
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("auth");
     return saved ? JSON.parse(saved) : null;
   });
 
+  /* ================= STORE ================= */
   const [selectedStore, setSelectedStore] = useState(() => {
     const savedStore = localStorage.getItem("selectedStore");
     return savedStore ? JSON.parse(savedStore) : null;
   });
 
+  /* ================= LOGIN ================= */
   const login = (authData) => {
     setUser(authData);
     localStorage.setItem("auth", JSON.stringify(authData));
   };
 
+  /* ================= LOGOUT ================= */
   const logout = () => {
     setUser(null);
     setSelectedStore(null);
@@ -27,21 +31,31 @@ const AuthProvider = ({ children }) => {
     removeAllTokens();
   };
 
+  /* ================= PROFILE SYNC ================= */
   const fetchProfile = async () => {
     try {
       const res = await getProfileApi();
+
       setUser((prev) => {
-        const updated = { ...prev, ...res.data };
-        localStorage.setItem("auth", JSON.stringify(updated));
-        return updated;
+        if (!prev) return prev;
+
+        const updatedUser = {
+          ...prev,
+          ...res.data, // first_name, last_name, profile_image, etc
+        };
+
+        localStorage.setItem("auth", JSON.stringify(updatedUser));
+        return updatedUser;
       });
-    } catch {
-      console.log("Profile sync failed");
+    } catch (err) {
+      console.log("Profile sync failed", err);
     }
   };
 
+  /* ================= ROLE ================= */
   const role = user?.role || user?.user?.role;
 
+  /* ================= STORE SELECT ================= */
   const selectStore = (store) => {
     setSelectedStore(store);
     localStorage.setItem("selectedStore", JSON.stringify(store));

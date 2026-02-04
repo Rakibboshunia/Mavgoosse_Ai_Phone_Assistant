@@ -44,6 +44,7 @@ export default function Navbar() {
       setLoadingStores(true);
       const res = await getStoresApi();
       if (Array.isArray(res.data)) {
+        // console.log(res.data)
         setStores(res.data);
       }
     } catch (error) {
@@ -145,7 +146,7 @@ export default function Navbar() {
 
       <button
         onClick={handleLogout}
-        className="bg-red-900 text-white py-3 rounded-xl"
+        className="bg-red-900 text-white py-3 rounded-xl cursor-pointer"
       >
         Logout
       </button>
