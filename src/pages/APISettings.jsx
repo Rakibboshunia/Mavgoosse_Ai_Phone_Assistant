@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
+import { AuthContext } from "../provider/AuthContext";
 import {
   getApiConfig,
   updateApiConfig,
 } from "../libs/apiConfig.api";
 
-const STORE_ID = 3; // later auth/context theke dynamic hobe
-
 export default function APISettings() {
-  const [apiKey, setApiKey] = useState("vapi_sk_••••••••••••••••••••••••••");
+  /* ================= STORE ================= */
+  const { getActiveStoreId, role } = useContext(AuthContext);
+  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
+
+  /* ================= STATE ================= */
+  const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
 
   const [modelConfig, setModelConfig] = useState({
@@ -20,7 +24,7 @@ export default function APISettings() {
 
   const [performance, setPerformance] = useState({
     timeout: 10,
-    retryAttempts: "2 attempts",
+    retryAttempts: 2,
     voiceProvider: "Eleven Labs",
   });
 
@@ -31,7 +35,9 @@ export default function APISettings() {
     noiseSuppression: false,
   });
 
-  /* ✅ ERROR LOGS */
+  const [loading, setLoading] = useState(false);
+
+  /* ================= STATIC ERROR LOGS (UI ONLY) ================= */
   const errorLogs = [
     {
       type: "warning",
@@ -52,54 +58,64 @@ export default function APISettings() {
 
   /* ================= LOAD CONFIG ================= */
   useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        const res = await getApiConfig(STORE_ID);
-        const { ai_config, stt_config, api_key } = res.data;
-
-        if (api_key?.key) setApiKey(api_key.key);
-
-        if (ai_config) {
-          setModelConfig({
-            model: ai_config.model ?? modelConfig.model,
-            temperature: ai_config.temperature ?? modelConfig.temperature,
-            maxTokens: ai_config.max_tokens ?? modelConfig.maxTokens,
-          });
-
-          setPerformance({
-            timeout: ai_config.timeout ?? performance.timeout,
-            retryAttempts:
-              ai_config.retry_attempts ?? performance.retryAttempts,
-            voiceProvider:
-              ai_config.voice_provider ?? performance.voiceProvider,
-          });
-        }
-
-        if (stt_config) {
-          setSTTSettings({
-            provider: stt_config.provider ?? sttSettings.provider,
-            language: stt_config.language ?? sttSettings.language,
-            punctuation:
-              stt_config.punctuation ?? sttSettings.punctuation,
-            noiseSuppression:
-              stt_config.noise_suppression ??
-              sttSettings.noiseSuppression,
-          });
-        }
-      } catch {
-        toast.error("Failed to load API config");
-      }
-    };
-
+    if (!storeId) return;
     loadConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [storeId]);
+
+  const loadConfig = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getApiConfig(storeId);
+      const { ai_config, stt_config, api_key } = res.data || {};
+
+      if (api_key?.key) setApiKey(api_key.key);
+
+      if (ai_config) {
+        setModelConfig({
+          model: ai_config.model ?? "GPT-40 (Recommend)",
+          temperature: ai_config.temperature ?? 0.7,
+          maxTokens: ai_config.max_tokens ?? 150,
+        });
+
+        setPerformance({
+          timeout: ai_config.timeout ?? 10,
+          retryAttempts: ai_config.retry_attempts ?? 2,
+          voiceProvider:
+            ai_config.voice_provider ?? "Eleven Labs",
+        });
+      }
+
+      if (stt_config) {
+        setSTTSettings({
+          provider:
+            stt_config.provider ?? "Google Speech-to-Text",
+          language: stt_config.language ?? "English",
+          punctuation:
+            stt_config.punctuation ?? true,
+          noiseSuppression:
+            stt_config.noise_suppression ?? false,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load API config");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* ================= HANDLERS ================= */
 
   const handleSaveKey = async () => {
+    if (!storeId) {
+      toast.error("Please select a store first");
+      return;
+    }
+
     try {
-      await updateApiConfig(STORE_ID, {
+      await updateApiConfig(storeId, {
         api_key: { key: apiKey },
       });
       toast.success("API key saved ✅");
@@ -108,12 +124,18 @@ export default function APISettings() {
     }
   };
 
-  /* ✅ FIXED: handleTestConnection EXISTS */
   const handleTestConnection = () => {
-    toast("Test connection endpoint backend এ এখনো implement করা হয়নি");
+    toast(
+      "Test connection endpoint backend এ এখনো implement করা হয়নি"
+    );
   };
 
   const handleSaveSettings = async () => {
+    if (!storeId) {
+      toast.error("Please select a store first");
+      return;
+    }
+
     try {
       const payload = {
         api_key: {
@@ -135,13 +157,25 @@ export default function APISettings() {
         },
       };
 
-      await updateApiConfig(STORE_ID, payload);
+      await updateApiConfig(storeId, payload);
       toast.success("Settings saved successfully ✅");
     } catch (err) {
-      console.error(err.response?.data);
+      console.error(err.response?.data || err);
       toast.error("Failed to save settings ❌");
     }
   };
+
+  /* ================= GUARD ================= */
+  if (role === "SUPER_ADMIN" && !storeId) {
+    return (
+      <div className="p-10 text-center text-[#90A1B9]">
+        <h2 className="text-xl font-bold mb-2">
+          No store selected
+        </h2>
+        <p>Please select a store to configure API settings.</p>
+      </div>
+    );
+  }
 
   /* ================= UI ================= */
   return (
@@ -149,7 +183,11 @@ export default function APISettings() {
       {/* API Key Management */}
       <div className="bg-[#1D293D80] border-2 border-[#2B7FFF33] rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
-          <Icon icon="mdi:key-variant" className="text-[#2B7FFF]" width={24} />
+          <Icon
+            icon="mdi:key-variant"
+            className="text-[#2B7FFF]"
+            width={24}
+          />
           <h2 className="text-xl font-bold text-white">
             API Key Management
           </h2>

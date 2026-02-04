@@ -16,10 +16,16 @@ const AuthProvider = ({ children }) => {
     return savedStore ? JSON.parse(savedStore) : null;
   });
 
+  /* ================= ROLE ================= */
+  const rawRole = user?.role || user?.user?.role;
+  const role = rawRole ? rawRole.toUpperCase() : null;
+
   /* ================= LOGIN ================= */
   const login = (authData) => {
     setUser(authData);
+    setSelectedStore(null);
     localStorage.setItem("auth", JSON.stringify(authData));
+    localStorage.removeItem("selectedStore");
   };
 
   /* ================= LOGOUT ================= */
@@ -41,7 +47,7 @@ const AuthProvider = ({ children }) => {
 
         const updatedUser = {
           ...prev,
-          ...res.data, // first_name, last_name, profile_image, etc
+          ...res.data,
         };
 
         localStorage.setItem("auth", JSON.stringify(updatedUser));
@@ -52,13 +58,18 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  /* ================= ROLE ================= */
-  const role = user?.role || user?.user?.role;
-
   /* ================= STORE SELECT ================= */
   const selectStore = (store) => {
     setSelectedStore(store);
     localStorage.setItem("selectedStore", JSON.stringify(store));
+  };
+
+  /* ================= ACTIVE STORE ID ================= */
+  const getActiveStoreId = () => {
+    if (role === "SUPER_ADMIN") {
+      return selectedStore?.id || null;
+    }
+    return user?.store || null;
   };
 
   return (
@@ -71,6 +82,7 @@ const AuthProvider = ({ children }) => {
         fetchProfile,
         selectedStore,
         selectStore,
+        getActiveStoreId, // 🔥 KEY THING
       }}
     >
       {children}

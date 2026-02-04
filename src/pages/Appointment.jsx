@@ -1,24 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import AppointmentStatsCard from "../components/AppointmentStatsCard";
 import BookingLink from "../components/BookingLink";
 import AppointmentCard from "../components/AppointmentCard";
-import DropDown from "../components/DropDown";
 import toast from "react-hot-toast";
 
 import { getAppointmentsApi } from "../libs/appointments.api";
 import { adaptAppointment } from "../utils/appointmentsAdapter";
+import { AuthContext } from "../provider/AuthContext";
 
 export default function Appointment() {
+  const { selectedStore, role } = useContext(AuthContext);
+  const storeId = selectedStore?.id;
+
   const [appointments, setAppointments] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(false);
 
+  /* ================= FETCH ================= */
   const fetchAppointments = async () => {
+    if (!storeId) return;
+
     try {
       setLoading(true);
-      const res = await getAppointmentsApi();
 
-      const adapted = res.data.map(adaptAppointment);
+      const res = await getAppointmentsApi({
+        store: storeId, // 🔥 IMPORTANT
+      });
+
+      const adapted = Array.isArray(res.data)
+        ? res.data.map(adaptAppointment)
+        : [];
+
       setAppointments(adapted);
     } catch (err) {
       toast.error("Failed to load appointments");
@@ -29,20 +41,28 @@ export default function Appointment() {
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeId]);
 
+  /* ================= FILTER ================= */
   const filteredAppointments =
     filter === "all"
       ? appointments
       : appointments.filter((a) => a.status === filter);
 
-  const filterOptions = [
-    { label: "All Appointments", value: "all" },
-    { label: "Confirmed", value: "confirmed" },
-    { label: "Pending", value: "pending" },
-    { label: "Canceled", value: "canceled" },
-  ];
+  /* ================= GUARD ================= */
+  if (role === "SUPER_ADMIN" && !storeId) {
+    return (
+      <div className="p-10 text-center text-[#90A1B9]">
+        <h2 className="text-xl font-bold mb-2">
+          No store selected
+        </h2>
+        <p>Please select a store to view appointments.</p>
+      </div>
+    );
+  }
 
+  /* ================= UI ================= */
   return (
     <div className="space-y-8 pb-12">
       {/* STATS */}
@@ -72,15 +92,12 @@ export default function Appointment() {
         />
       </div>
 
-      <BookingLink url="https://techstore.com/book?id=store123" />
+      {/* BOOKING LINK */}
+      <BookingLink
+        url={`https://techstore.com/book?store=${storeId}`}
+      />
 
-      {/* <DropDown
-        options={filterOptions}
-        value={filter}
-        onChange={setFilter}
-        className="w-64"
-      /> */}
-
+      {/* LIST */}
       {loading ? (
         <p className="text-center text-[#90A1B9]">Loading...</p>
       ) : (

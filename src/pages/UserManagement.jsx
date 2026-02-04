@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Icon } from "@iconify/react";
 import AddUserModal from "../components/AddUserModal";
 import {
@@ -7,6 +7,7 @@ import {
   updateUserApi,
   deleteUserApi,
 } from "../libs/users.api";
+import { AuthContext } from "../provider/AuthContext";
 
 /* ================= ROLE MAPPING ================= */
 const ROLE_LABEL_MAP = {
@@ -21,7 +22,12 @@ const ROLE_VALUE_MAP = {
   Staff: "STAFF",
 };
 
+const BACKEND_URL = "http://172.252.13.97:8020";
+
 export default function UserManagement() {
+  const { role, getActiveStoreId } = useContext(AuthContext);
+  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,43 +38,33 @@ export default function UserManagement() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
-  const [permissions, setPermissions] = useState({
-    "Super Admin": {
-      viewCallLogs: true,
-      bookAppointments: true,
-      viewPricing: true,
-    },
-    "Store Manager": {
-      viewCallLogs: true,
-      bookAppointments: true,
-      viewPricing: true,
-    },
-    Staff: {
-      viewCallLogs: false,
-      bookAppointments: false,
-      viewPricing: false,
-    },
-  });
-
   /* ================= FETCH USERS ================= */
   useEffect(() => {
+    if (role === "SUPER_ADMIN" && !storeId) return;
     fetchUsers();
-  }, []);
+  }, [storeId]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await getUsersApi();
 
-      const formatted = res.data.map((u) => ({
+      const res = await getUsersApi({
+        store: storeId, // 🔥 STORE SCOPED
+      });
+
+      const formatted = (res.data || []).map((u) => ({
         id: u.id,
         name: `${u.first_name} ${u.last_name}`,
         email: u.email,
         role: ROLE_LABEL_MAP[u.role],
         status: "active",
-        lastActive: u.last_active,
+        lastActive: u.last_active || "—",
         initials: `${u.first_name?.[0] ?? ""}${u.last_name?.[0] ?? ""}`,
-        profile_image: u.profile_image,
+        profile_image: u.profile_image
+          ? u.profile_image.startsWith("http")
+            ? u.profile_image
+            : `${BACKEND_URL}${u.profile_image}`
+          : null,
       }));
 
       setUsers(formatted);
@@ -77,30 +73,6 @@ export default function UserManagement() {
     } finally {
       setLoading(false);
     }
-  };
-
-  /* ================= HELPERS ================= */
-  const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case "Super Admin":
-        return "bg-[#FF2056] text-white";
-      case "Store Manager":
-        return "bg-[#2B7FFF] text-white";
-      case "Staff":
-        return "bg-[#05DF72] text-white";
-      default:
-        return "bg-gray-500 text-white";
-    }
-  };
-
-  const handlePermissionChange = (permission) => {
-    setPermissions({
-      ...permissions,
-      [selectedRole]: {
-        ...permissions[selectedRole],
-        [permission]: !permissions[selectedRole][permission],
-      },
-    });
   };
 
   /* ================= DELETE ================= */
@@ -112,7 +84,7 @@ export default function UserManagement() {
   const confirmDelete = async () => {
     try {
       await deleteUserApi(selectedUser.id);
-      setUsers(users.filter((u) => u.id !== selectedUser.id));
+      fetchUsers();
     } catch (err) {
       console.error("Delete failed", err);
     } finally {
@@ -121,49 +93,37 @@ export default function UserManagement() {
     }
   };
 
-  /* ================= EDIT ================= */
-  const handleEditUser = (user) => {
-    setSelectedUser(user);
-    setIsEditModalOpen(true);
-  };
-
-  const handleSaveEdit = async () => {
+  /* ================= ADD ================= */
+  const handleAddNewUser = async (userData) => {
     try {
-      await updateUserApi(selectedUser.id, {
-        first_name: selectedUser.name.split(" ")[0],
-        last_name: selectedUser.name.split(" ").slice(1).join(" "),
-        email: selectedUser.email,
-        role: ROLE_VALUE_MAP[selectedUser.role],
+      const parts = userData.name.trim().split(/\s+/);
+
+      await createUserApi({
+        first_name: parts[0],
+        last_name: parts.length > 1 ? parts.slice(1).join(" ") : "User",
+        email: userData.email,
+        role: ROLE_VALUE_MAP[userData.role],
+        password: userData.password,
+        store: storeId, // 🔥 STORE ASSIGN
       });
+
       fetchUsers();
     } catch (err) {
-      console.error("Update failed", err);
+      console.error("Create user failed", err?.response?.data);
+      alert("User creation failed. Check console.");
     } finally {
-      setIsEditModalOpen(false);
-      setSelectedUser(null);
+      setIsAddUserModalOpen(false);
     }
   };
 
-  /* ================= ADD ================= */
-  const handleAddNewUser = async (userData) => {
-  try {
-    await createUserApi({
-      first_name: userData.name.split(" ")[0],
-      last_name: userData.name.split(" ").slice(1).join(" "),
-      email: userData.email,
-      role: ROLE_VALUE_MAP[userData.role],
-      password: userData.password, // 👈 REQUIRED
-    });
-
-    fetchUsers();
-  } catch (err) {
-    console.error("Create user failed", err.response?.data);
-    alert("User creation failed. Check console.");
-  } finally {
-    setIsAddUserModalOpen(false);
+  /* ================= EMPTY STATE ================= */
+  if (role === "SUPER_ADMIN" && !storeId) {
+    return (
+      <div className="flex items-center justify-center h-[60vh] text-[#90A1B9]">
+        <p>Please select a store from the sidebar to manage users.</p>
+      </div>
+    );
   }
-};
-
 
   return (
     <div className="p-6">
@@ -181,10 +141,14 @@ export default function UserManagement() {
       <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8">
         {/* USERS LIST */}
         <div className="bg-[#1D293D80] border-2 border-[#2B7FFF33] rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-white mb-6">All Users</h2>
+          <h2 className="text-xl font-bold text-white mb-6">
+            Store Users
+          </h2>
 
           {loading && (
-            <p className="text-center text-[#90A1B9]">Loading users...</p>
+            <p className="text-center text-[#90A1B9]">
+              Loading users...
+            </p>
           )}
 
           <div className="space-y-4">
@@ -207,12 +171,10 @@ export default function UserManagement() {
 
                   <div>
                     <h3 className="text-white">{user.name}</h3>
-                    <p className="text-[#90A1B9] text-sm">{user.email}</p>
-                    <span
-                      className={`text-xs px-3 py-1 rounded-full mt-2 inline-block ${getRoleBadgeColor(
-                        user.role
-                      )}`}
-                    >
+                    <p className="text-[#90A1B9] text-sm">
+                      {user.email}
+                    </p>
+                    <span className="text-xs px-3 py-1 rounded-full mt-2 inline-block bg-[#2B7FFF] text-white">
                       {user.role}
                     </span>
                   </div>
@@ -220,16 +182,19 @@ export default function UserManagement() {
 
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className="text-xs text-[#90A1B9]">Last Active</p>
-                    <p className="text-sm text-white">{user.lastActive}</p>
+                    <p className="text-xs text-[#90A1B9]">
+                      Last Active
+                    </p>
+                    <p className="text-sm text-white">
+                      {user.lastActive}
+                    </p>
                   </div>
 
-                  <button onClick={() => handleEditUser(user)}>
-                    <Icon icon="mdi:pencil" className="text-[#2B7FFF]" />
-                  </button>
-
                   <button onClick={() => handleDeleteUser(user)}>
-                    <Icon icon="mdi:delete" className="text-[#FF2056]" />
+                    <Icon
+                      icon="mdi:delete"
+                      className="text-[#FF2056]"
+                    />
                   </button>
                 </div>
               </div>
@@ -237,41 +202,20 @@ export default function UserManagement() {
           </div>
         </div>
 
-        {/* ROLE PERMISSIONS (UI ONLY) */}
+        {/* ROLE PANEL (UI ONLY) */}
         <div className="bg-[#1D293D80] border-2 border-[#2B7FFF33] rounded-2xl p-6">
           <h2 className="text-xl font-bold text-white mb-6">
-            Role Permissions
+            Roles
           </h2>
 
-          {["Super Admin", "Store Manager", "Staff"].map((role) => (
-            <button
-              key={role}
-              onClick={() => setSelectedRole(role)}
-              className={`w-full mb-3 px-4 py-3 rounded-xl ${
-                selectedRole === role
-                  ? "bg-[#05DF72] text-white"
-                  : "bg-[#0F172B60] text-white"
-              }`}
+          {["Super Admin", "Store Manager", "Staff"].map((r) => (
+            <div
+              key={r}
+              className="mb-3 px-4 py-3 rounded-xl bg-[#0F172B60] text-white"
             >
-              {role}
-            </button>
+              {r}
+            </div>
           ))}
-
-          {/* <h3 className="text-white mt-6 mb-4">
-            Permissions for {selectedRole}
-          </h3>
-
-          {Object.keys(permissions[selectedRole]).map((perm) => (
-            <label key={perm} className="flex items-center gap-3 mb-3">
-              <input
-                type="checkbox"
-                checked={permissions[selectedRole][perm]}
-                onChange={() => handlePermissionChange(perm)}
-              />
-              <span className="text-white">{perm}</span>
-            </label>
-          ))} */}
-          
         </div>
       </div>
 
@@ -279,7 +223,9 @@ export default function UserManagement() {
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
           <div className="bg-[#1D293D] p-6 rounded-xl w-100">
-            <h3 className="text-white text-xl mb-4">Delete User?</h3>
+            <h3 className="text-white text-xl mb-4">
+              Delete User?
+            </h3>
             <p className="text-[#90A1B9] mb-6">
               Delete <b>{selectedUser?.name}</b> permanently?
             </p>

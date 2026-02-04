@@ -12,8 +12,10 @@ import {
 } from "../libs/pricing.api";
 
 export default function PricingList() {
-  const { user } = useContext(AuthContext);
-  const isAdmin = user?.user?.role === "SUPER_ADMIN";
+  const { role, getActiveStoreId } = useContext(AuthContext);
+
+  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
+  const isAdmin = role === "SUPER_ADMIN";
 
   const [pricingData, setPricingData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,15 +36,8 @@ export default function PricingList() {
 
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
-    getCategoriesApi().then((res) => {
-      console.log("✅ Categories:", res.data);
-      setCategories(res.data);
-    });
-
-    getRepairTypesApi().then((res) => {
-      console.log("✅ Repair Types:", res.data);
-      setRepairTypes(res.data);
-    });
+    getCategoriesApi().then((res) => setCategories(res.data || []));
+    getRepairTypesApi().then((res) => setRepairTypes(res.data || []));
   }, []);
 
   /* ================= CATEGORY → BRANDS ================= */
@@ -55,12 +50,9 @@ export default function PricingList() {
     }
 
     getBrandsApi(filters.category).then((res) => {
-      // 🔥 IMPORTANT FIX: category matched brands only
-      const validBrands = res.data.filter(
+      const validBrands = (res.data || []).filter(
         (b) => String(b.category) === String(filters.category)
       );
-
-      console.log("✅ Filtered Brands:", validBrands);
       setBrands(validBrands);
     });
 
@@ -76,12 +68,9 @@ export default function PricingList() {
     }
 
     getDeviceModelsApi(filters.brand).then((res) => {
-      // 🔥 IMPORTANT FIX: brand matched models only
-      const validModels = res.data.filter(
+      const validModels = (res.data || []).filter(
         (m) => String(m.brand) === String(filters.brand)
       );
-
-      console.log("✅ Filtered Models:", validModels);
       setModels(validModels);
     });
 
@@ -90,16 +79,22 @@ export default function PricingList() {
 
   /* ================= FETCH PRICE LIST ================= */
   const fetchPriceList = async () => {
+    // ⛔ Super Admin must select store first
+    if (role === "SUPER_ADMIN" && !storeId) return;
+    if (!storeId) return;
+
     try {
       setLoading(true);
 
-      console.log("📤 Price List Filters:", filters);
+      const res = await getPriceListApi({
+        store: storeId, // 🔥 STORE SCOPED
+        category: filters.category || undefined,
+        brand: filters.brand || undefined,
+        model: filters.model || undefined,
+        repair_type: filters.repairType || undefined,
+      });
 
-      const res = await getPriceListApi(filters);
-
-      console.log("📥 Price List Data:", res.data);
-
-      setPricingData(res.data);
+      setPricingData(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("❌ Price List Error:", err?.response?.data || err);
     } finally {
@@ -107,17 +102,37 @@ export default function PricingList() {
     }
   };
 
+  /* ================= STORE / FILTER CHANGE ================= */
   useEffect(() => {
+    setPricingData([]);
     fetchPriceList();
-  }, [filters]);
+  }, [storeId, filters]);
 
   /* ================= STATUS TOGGLE ================= */
   const toggleStatus = async (item) => {
-    const newStatus = item.status === "ACTIVE" ? "DISABLED" : "ACTIVE";
+    try {
+      const newStatus =
+        item.status === "ACTIVE" ? "DISABLED" : "ACTIVE";
 
-    await updatePriceApi(item.id, { status: newStatus });
-    fetchPriceList();
+      await updatePriceApi(item.id, {
+        status: newStatus,
+        store: storeId, // 🔥 ensure store aware
+      });
+
+      fetchPriceList();
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  /* ================= EMPTY STATE ================= */
+  if (role === "SUPER_ADMIN" && !storeId) {
+    return (
+      <div className="flex items-center justify-center h-[60vh] text-[#90A1B9]">
+        <p>Please select a store from the sidebar to manage pricing.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gradient-to-br from-[#0A1230] via-[#0E1B4D] to-[#070E26] min-h-screen">
@@ -226,9 +241,15 @@ export default function PricingList() {
             >
               <div className="text-white">{item.category_name}</div>
               <div className="text-white">{item.brand_name}</div>
-              <div className="text-white">{item.device_model_name}</div>
-              <div className="text-white">{item.repair_type_name}</div>
-              <div className="text-white font-semibold">${item.price}</div>
+              <div className="text-white">
+                {item.device_model_name}
+              </div>
+              <div className="text-white">
+                {item.repair_type_name}
+              </div>
+              <div className="text-white font-semibold">
+                ${item.price}
+              </div>
 
               <button
                 onClick={() => toggleStatus(item)}
@@ -242,15 +263,19 @@ export default function PricingList() {
               </button>
 
               <div className="text-gray-400 text-sm">
-                {new Date(item.updated_at).toISOString().split("T")[0]}
+                {new Date(item.updated_at)
+                  .toISOString()
+                  .split("T")[0]}
               </div>
             </div>
           ))
         )}
       </div>
 
+      {/* ================= ADD MODAL ================= */}
       {isAddModalOpen && (
         <AddPriceModal
+          storeId={storeId}
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={fetchPriceList}
         />

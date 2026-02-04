@@ -57,8 +57,8 @@ const fromBusinessHoursArray = (arr = []) => {
 /* ================= Component ================= */
 
 export default function AISettings() {
-  const { selectedStore } = useContext(AuthContext);
-  const storeId = selectedStore?.id;
+  const { getActiveStoreId } = useContext(AuthContext);
+  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
 
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -88,13 +88,13 @@ export default function AISettings() {
 
   const [newKeyword, setNewKeyword] = useState("");
 
-  /* ================= LOAD ================= */
+  /* ================= LOAD CONFIG ================= */
 
   useEffect(() => {
-    if (!storeId || notFound) return;
+    if (!storeId) return;
     loadConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId, notFound]);
+  }, [storeId]);
 
   const loadConfig = async () => {
     try {
@@ -120,8 +120,7 @@ export default function AISettings() {
       });
     } catch (err) {
       if (err.response?.status === 404) {
-        // AI behavior not created yet
-        setNotFound(true);
+        setNotFound(true); // AI behavior not created yet
       } else {
         console.error("Failed to load AI behavior", err);
       }
@@ -167,9 +166,11 @@ export default function AISettings() {
       closed_hours_message: greetings.closed,
     },
     business_hours: toBusinessHoursArray(businessHours),
-    auto_transfer_keywords: escalation.keywords.map((k) => ({
-      keyword: k,
-    })),
+    auto_transfer_keywords: [...new Set(escalation.keywords)].map(
+      (k) => ({
+        keyword: k,
+      })
+    ),
   });
 
   /* ================= KEYWORDS ================= */
@@ -208,7 +209,9 @@ export default function AISettings() {
       {/* Greetings */}
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-[#1D293D80] p-6 rounded-2xl">
-          <h2 className="text-white font-bold mb-4">Greeting Scripts</h2>
+          <h2 className="text-white font-bold mb-4">
+            Greeting Scripts
+          </h2>
           <textarea
             value={greetings.opening}
             onChange={(e) =>
@@ -248,7 +251,9 @@ export default function AISettings() {
 
       {/* Business Hours */}
       <div className="bg-[#1D293D80] p-6 rounded-2xl">
-        <h2 className="text-white font-bold mb-4">Business Hours</h2>
+        <h2 className="text-white font-bold mb-4">
+          Business Hours
+        </h2>
         <div className="grid md:grid-cols-3 gap-4">
           {Object.entries(businessHours).map(([day, times]) => (
             <div key={day}>
@@ -280,7 +285,9 @@ export default function AISettings() {
 
       {/* Escalation */}
       <div className="bg-[#1D293D80] p-6 rounded-2xl">
-        <h2 className="text-white font-bold mb-4">Escalation Rules</h2>
+        <h2 className="text-white font-bold mb-4">
+          Escalation Rules
+        </h2>
 
         <select
           value={escalation.retryAttempts}
@@ -344,7 +351,11 @@ export default function AISettings() {
         disabled={loading}
         className="w-full bg-green-500 text-white py-3 rounded-xl font-bold"
       >
-        {loading ? "Saving..." : notFound ? "Create AI Settings" : "Save AI Settings"}
+        {loading
+          ? "Saving..."
+          : notFound
+          ? "Create AI Settings"
+          : "Save AI Settings"}
       </button>
     </div>
   );

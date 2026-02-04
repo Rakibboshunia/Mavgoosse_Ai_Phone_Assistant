@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import DashboardStatus from "../components/DashboardStatus";
 import DropDown from "../components/DropDown";
 import Graph from "../components/Graph";
@@ -10,11 +10,15 @@ import {
   getStoreSummaryApi,
 } from "../libs/callDashboard.api";
 
+import { AuthContext } from "../provider/AuthContext";
+
 export default function Dashboard() {
-  const storeId = 17;
+  const { role, getActiveStoreId } = useContext(AuthContext);
+
+  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
 
   const [selectedTime, setSelectedTime] = useState("today");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const [trendData, setTrendData] = useState({});
   const [totalCalls, setTotalCalls] = useState(0);
@@ -26,31 +30,46 @@ export default function Dashboard() {
     { label: "Last Year", value: "last-year" },
   ];
 
+  /* ================= FETCH DASHBOARD DATA ================= */
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    // ⛔ Super Admin must select a store first
+    if (role === "SUPER_ADMIN" && !storeId) return;
 
-  const fetchDashboardData = async () => {
+    if (!storeId) return;
+
+    fetchDashboardData(storeId);
+  }, [storeId, selectedTime]);
+
+  const fetchDashboardData = async (activeStoreId) => {
     try {
       setLoading(true);
 
       const [trendRes, summaryRes] = await Promise.all([
-        getCallTrendsApi(storeId),
-        getStoreSummaryApi(storeId),
+        getCallTrendsApi(activeStoreId),
+        getStoreSummaryApi(activeStoreId),
       ]);
 
       // Call Trends
-      setTrendData(trendRes.data.trend || {});
-      setTotalCalls(trendRes.data.total_calls || 0);
+      setTrendData(trendRes?.data?.trend || {});
+      setTotalCalls(trendRes?.data?.total_calls || 0);
 
-      // Store Summary (today)
-      setStoreSummary(summaryRes.data?.[0] || null);
+      // Store Summary
+      setStoreSummary(summaryRes?.data?.[0] || null);
     } catch (error) {
       console.error("Dashboard API Error:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  /* ================= EMPTY STATE ================= */
+  if (role === "SUPER_ADMIN" && !storeId) {
+    return (
+      <div className="flex items-center justify-center h-[60vh] text-[#90A1B9]">
+        <p>Please select a store from the sidebar to view dashboard data.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -114,6 +133,7 @@ export default function Dashboard() {
               Total: {totalCalls} calls
             </p>
           </div>
+
           <DropDown
             options={options}
             value={selectedTime}

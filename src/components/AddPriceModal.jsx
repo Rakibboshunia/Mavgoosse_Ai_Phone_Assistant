@@ -69,30 +69,30 @@ export default function AddPriceModal({ onClose, onSuccess }) {
 
         <div className="grid grid-cols-2 gap-4">
           <select onChange={e => setForm({ ...form, category: e.target.value })}>
-            <option value="">Select Category</option>
+            <option value="" className="bg-red-300">Select Category</option>
             {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option className="bg-black" key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
 
           <select onChange={e => setForm({ ...form, brand: e.target.value })}>
-            <option value="">Select Brand</option>
+            <option className="bg-red-300" value="">Select Brand</option>
             {brands.map(b => (
-              <option key={b.id} value={b.id}>{b.name}</option>
+              <option className="bg-black" key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
 
           <select onChange={e => setForm({ ...form, model: e.target.value })}>
-            <option value="">Select Model</option>
+            <option className="bg-red-300" value="">Select Model</option>
             {models.map(m => (
-              <option key={m.id} value={m.id}>{m.name}</option>
+              <option className="bg-black" key={m.id} value={m.id}>{m.name}</option>
             ))}
           </select>
 
           <select onChange={e => setForm({ ...form, repairType: e.target.value })}>
-            <option value="">Select Repair Type</option>
+            <option className="bg-red-300" value="">Select Repair Type</option>
             {repairTypes.map(r => (
-              <option key={r.id} value={r.id}>{r.name}</option>
+              <option className="bg-black" key={r.id} value={r.id}>{r.name}</option>
             ))}
           </select>
 
@@ -102,7 +102,7 @@ export default function AddPriceModal({ onClose, onSuccess }) {
             onChange={e => setForm({ ...form, price: e.target.value })}
           />
 
-          <select onChange={e => setForm({ ...form, status: e.target.value })}>
+          <select className="bg-black" onChange={e => setForm({ ...form, status: e.target.value })}>
             <option value="ACTIVE">Active</option>
             <option value="DISABLED">Disabled</option>
           </select>
