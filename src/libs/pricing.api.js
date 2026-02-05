@@ -1,6 +1,6 @@
 import api from "./axios";
 
-
+/* ================= GET ================= */
 export const getCategoriesApi = () =>
   api.get("/api/v1/services/categories/");
 
@@ -17,19 +17,34 @@ export const getDeviceModelsApi = (brand) =>
 export const getRepairTypesApi = () =>
   api.get("/api/v1/services/repair-types/");
 
-
+/* ================= PRICE LIST ================= */
 export const getPriceListApi = (filters = {}) =>
   api.get("/api/v1/services/price-list/", {
     params: {
+      store: filters.store || undefined,
       category: filters.category || undefined,
       brand: filters.brand || undefined,
       device_model: filters.model || undefined,
-      repair_type: filters.repairType || undefined,
+      repair_type: filters.repair_type || undefined,
     },
   });
 
-export const createPriceApi = (data) =>
-  api.post("/api/v1/services/price-list/", data);
+/* ================= CREATE ================= */
+export const createPriceApi = (data, storeId) =>
+  api.post(
+    "/api/v1/services/price-list/",
+    data,
+    {
+      params: storeId ? { store: storeId } : {},
+    }
+  );
 
-export const updatePriceApi = (id, data) =>
-  api.patch(`/api/v1/services/price-list/${id}/`, data);
+/* ================= UPDATE ================= */
+export const updatePriceApi = (id, data, storeId) =>
+  api.patch(
+    `/api/v1/services/price-list/${id}/`,
+    data,
+    {
+      params: storeId ? { store: storeId } : {},
+    }
+  );

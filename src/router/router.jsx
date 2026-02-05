@@ -1,20 +1,22 @@
 import { createBrowserRouter } from "react-router-dom";
 import DashboardLayout from "../layout/DashboardLayout";
-import Registration from "../pages/authentication/Registration";
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/authentication/Login";
+import Registration from "../pages/authentication/Registration";
+import SendEmail from "../pages/authentication/SendEmail";
+import Verifyotp from "../pages/authentication/Verifyotp";
+import Changepassword from "../pages/authentication/Changepassword";
+
 import CallLogs from "../pages/CallLogs";
 import CallTransfer from "../pages/CallTransfer";
 import PricingList from "../pages/Pricinglist";
 import Appointment from "../pages/Appointment";
 import Notifications from "../pages/Notifications";
 import Setting from "../pages/Setting";
-import SendEmail from "../pages/authentication/SendEmail";
-import Verifyotp from "../pages/authentication/Verifyotp";
-import Changepassword from "../pages/authentication/Changepassword";
 import AISettings from "../pages/AISettings";
 import APISettings from "../pages/APISettings";
 import UserManagement from "../pages/UserManagement";
+
 import ProtectedRoute from "../components/ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -25,7 +27,7 @@ const router = createBrowserRouter([
       {
         path: "/dashboard",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin", "StoreManager", "Staff"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER", "STAFF"]}>
             <Dashboard />
           </ProtectedRoute>
         ),
@@ -33,7 +35,7 @@ const router = createBrowserRouter([
       {
         path: "/call-logs",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin", "StoreManager", "Staff"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER", "STAFF"]}>
             <CallLogs />
           </ProtectedRoute>
         ),
@@ -41,23 +43,15 @@ const router = createBrowserRouter([
       {
         path: "/call-transfer",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin", "StoreManager", "Staff"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER", "STAFF"]}>
             <CallTransfer />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/pricing-list",
-        element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin", "StoreManager"]}>
-            <PricingList />
           </ProtectedRoute>
         ),
       },
       {
         path: "/pricing-management",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin", "StoreManager", "Staff"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER"]}>
             <PricingList />
           </ProtectedRoute>
         ),
@@ -65,7 +59,7 @@ const router = createBrowserRouter([
       {
         path: "/appointment",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin", "StoreManager", "Staff"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER", "STAFF"]}>
             <Appointment />
           </ProtectedRoute>
         ),
@@ -73,7 +67,7 @@ const router = createBrowserRouter([
       {
         path: "/notifications",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
             <Notifications />
           </ProtectedRoute>
         ),
@@ -81,16 +75,15 @@ const router = createBrowserRouter([
       {
         path: "/setting",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin","StoreManager", "Staff"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER", "STAFF"]}>
             <Setting />
           </ProtectedRoute>
         ),
       },
       {
         path: "/ai-behavior-settings",
-        
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin", "StoreManager"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER"]}>
             <AISettings />
           </ProtectedRoute>
         ),
@@ -98,7 +91,7 @@ const router = createBrowserRouter([
       {
         path: "/api-settings",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin", "StoreManager"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER"]}>
             <APISettings />
           </ProtectedRoute>
         ),
@@ -106,33 +99,18 @@ const router = createBrowserRouter([
       {
         path: "/user-management",
         element: (
-          <ProtectedRoute allowedRoles={["SuperAdmin"]}>
+          <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
             <UserManagement />
           </ProtectedRoute>
         ),
       },
     ],
   },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/registration",
-    element: <Registration />,
-  },
-  {
-    path: "/send-email",
-    element: <SendEmail />,
-  },
-  {
-    path: "/verify-otp",
-    element: <Verifyotp />,
-  },
-  {
-    path: "/change-password",
-    element: <Changepassword />,
-  },
+  { path: "/login", element: <Login /> },
+  { path: "/registration", element: <Registration /> },
+  { path: "/send-email", element: <SendEmail /> },
+  { path: "/verify-otp", element: <Verifyotp /> },
+  { path: "/change-password", element: <Changepassword /> },
 ]);
 
 export default router;

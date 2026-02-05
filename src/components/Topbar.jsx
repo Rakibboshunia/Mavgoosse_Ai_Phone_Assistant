@@ -1,7 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import formatTitle from "../libs/formateTitle";
 import { Icon } from "@iconify/react";
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { AuthContext } from "../provider/AuthContext";
 
 /* 🔧 BACKEND BASE URL */
@@ -14,20 +14,20 @@ export default function Topbar({ isMobile = false }) {
 
   const Title = formatTitle(location.pathname);
 
-  /* ================= PROFILE IMAGE HANDLER ================= */
-  const getProfileImage = () => {
+  /* ================= PROFILE IMAGE ================= */
+  const profileImage = useMemo(() => {
     if (!user?.profile_image) {
       return "https://api.dicebear.com/7.x/avataaars/svg";
     }
 
     // absolute URL
     if (user.profile_image.startsWith("http")) {
-      return `${user.profile_image}?t=${Date.now()}`;
+      return user.profile_image;
     }
 
     // relative path (/media/...)
-    return `${BACKEND_URL}${user.profile_image}?t=${Date.now()}`;
-  };
+    return `${BACKEND_URL}${user.profile_image}`;
+  }, [user?.profile_image]);
 
   return (
     <div className="flex justify-between items-center w-full">
@@ -36,8 +36,8 @@ export default function Topbar({ isMobile = false }) {
       )}
 
       <div className="flex items-center gap-4 md:gap-6">
-        {/* Notification */}
-        <NavLink to="/notifications">
+        {/* 🔔 Notifications */}
+        <NavLink to="/notifications" className="relative">
           <Icon
             icon={
               location.pathname === "/notifications"
@@ -47,9 +47,14 @@ export default function Topbar({ isMobile = false }) {
             width={isMobile ? 24 : 32}
             height={isMobile ? 24 : 32}
           />
+
+          {/* 🔔 UNREAD BADGE (ready for future) */}
+          {/* <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
+            3
+          </span> */}
         </NavLink>
 
-        {/* Profile Image */}
+        {/* 👤 Profile */}
         <button
           onClick={() => navigate("/setting")}
           className={`rounded-full overflow-hidden border-2 border-[#2B7FFF33] ${
@@ -57,7 +62,7 @@ export default function Topbar({ isMobile = false }) {
           }`}
         >
           <img
-            src={getProfileImage()}
+            src={`${profileImage}?t=${user?.updated_at || Date.now()}`}
             alt="Profile"
             className="w-full h-full object-cover cursor-pointer"
           />

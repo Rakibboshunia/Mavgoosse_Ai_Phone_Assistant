@@ -7,7 +7,7 @@ import {
 } from "../libs/auth.api";
 import { AuthContext } from "../provider/AuthContext";
 
-/* 🔧 BACKEND BASE URL (relative image fix) */
+/* 🔧 BACKEND BASE URL */
 const BACKEND_URL = "http://172.252.13.97:8020";
 
 export default function Setting() {
@@ -24,7 +24,6 @@ export default function Setting() {
     lastName: "",
     email: "",
     stateLocation: "",
-    store: "",
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -42,29 +41,28 @@ export default function Setting() {
       lastName: user.last_name || "",
       email: user.email || "",
       stateLocation: user.state_location || "",
-      store: user.store_name || user.store || "—",
     });
   }, [user]);
 
   /* ================= IMAGE CLEANUP ================= */
   useEffect(() => {
     return () => {
-      if (selectedImage) URL.revokeObjectURL(selectedImage);
+      if (selectedImage) {
+        URL.revokeObjectURL(selectedImage);
+      }
     };
   }, [selectedImage]);
 
-  /* ================= PROFILE IMAGE HANDLER ================= */
+  /* ================= PROFILE IMAGE ================= */
   const getProfileImage = () => {
     if (selectedImage) {
       return URL.createObjectURL(selectedImage);
     }
 
     if (user?.profile_image) {
-      // absolute URL
       if (user.profile_image.startsWith("http")) {
         return `${user.profile_image}?t=${Date.now()}`;
       }
-      // relative path (/media/...)
       return `${BACKEND_URL}${user.profile_image}?t=${Date.now()}`;
     }
 
@@ -85,18 +83,25 @@ export default function Setting() {
 
       const formData = new FormData();
       formData.append("first_name", profile.firstName.trim());
-      formData.append("last_name", profile.lastName.trim() || "User");
-      formData.append("state_location", profile.stateLocation || "");
+      formData.append(
+        "last_name",
+        profile.lastName.trim() || "User"
+      );
+      formData.append(
+        "state_location",
+        profile.stateLocation || ""
+      );
 
       if (selectedImage instanceof File) {
         formData.append("profile_image", selectedImage);
       }
 
       await updateProfileApi(formData);
-      await fetchProfile();
+      await fetchProfile(); // 🔥 GLOBAL SYNC
 
       setIsEditing(false);
       setSelectedImage(null);
+
       toast.success("Profile updated successfully");
     } catch (err) {
       console.error(err?.response?.data);
@@ -110,7 +115,8 @@ export default function Setting() {
   const handleSavePassword = async (e) => {
     e.preventDefault();
 
-    const { oldPassword, newPassword, confirmPassword } = passwordForm;
+    const { oldPassword, newPassword, confirmPassword } =
+      passwordForm;
 
     if (!oldPassword || !newPassword || !confirmPassword) {
       toast.error("All password fields are required");
@@ -152,7 +158,9 @@ export default function Setting() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-white mb-8">Settings</h1>
+      <h1 className="text-2xl font-bold text-white mb-8">
+        Settings
+      </h1>
 
       {/* ================= TABS ================= */}
       <div className="flex gap-12 mb-12 border-b border-[#2B7FFF10]">
@@ -161,10 +169,14 @@ export default function Setting() {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`pb-2 ${
-              activeTab === tab ? "text-white" : "text-[#90A1B9]"
+              activeTab === tab
+                ? "text-white"
+                : "text-[#90A1B9]"
             }`}
           >
-            {tab === "profile" ? "Profile" : "Password Settings"}
+            {tab === "profile"
+              ? "Profile"
+              : "Password Settings"}
           </button>
         ))}
       </div>
@@ -172,7 +184,9 @@ export default function Setting() {
       {/* ================= PROFILE TAB ================= */}
       {activeTab === "profile" && (
         <div>
-          <p className="text-sm text-[#90A1B9] mb-4">Profile Image</p>
+          <p className="text-sm text-[#90A1B9] mb-4">
+            Profile Image
+          </p>
 
           <div className="flex items-center gap-4 mb-8">
             <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#2B7FFF33]">
@@ -191,37 +205,51 @@ export default function Setting() {
                   accept="image/*"
                   hidden
                   onChange={(e) =>
-                    setSelectedImage(e.target.files?.[0])
+                    setSelectedImage(
+                      e.target.files?.[0] || null
+                    )
                   }
                 />
               </label>
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-1.5 rounded-lg border bg-[#2B7FFF15] text-[#2B7FFF] hover:bg-[#2B7FFF33] cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-[#2B7FFF15] text-[#2B7FFF] cursor-pointer text-sm"
               >
                 Edit Profile
               </button>
             )}
           </div>
 
-          <form onSubmit={handleSaveProfile} className="grid gap-6 max-w-3xl">
+          <form
+            onSubmit={handleSaveProfile}
+            className="grid gap-6 max-w-3xl"
+          >
             <InputField
               label="First Name"
               value={profile.firstName}
               onChange={(e) =>
-                setProfile({ ...profile, firstName: e.target.value })
+                setProfile({
+                  ...profile,
+                  firstName: e.target.value,
+                })
               }
             />
             <InputField
               label="Last Name"
               value={profile.lastName}
               onChange={(e) =>
-                setProfile({ ...profile, lastName: e.target.value })
+                setProfile({
+                  ...profile,
+                  lastName: e.target.value,
+                })
               }
             />
-            <InputField label="Email" value={profile.email} disabled />
-
+            <InputField
+              label="Email"
+              value={profile.email}
+              disabled
+            />
             <InputField
               label="State Location"
               value={profile.stateLocation}
@@ -237,9 +265,11 @@ export default function Setting() {
               <button
                 type="submit"
                 disabled={profileLoading}
-                className="bg-[#05DF72] px-8 py-3 rounded-xl text-white cursor-pointer hover:bg-[#05DF72CC]"
+                className="bg-[#05DF72] px-8 py-3 rounded-xl text-white cursor-pointer hover:bg-[#05DF72CC] disabled:bg-[#05DF7299]"
               >
-                {profileLoading ? "Saving..." : "Save"}
+                {profileLoading
+                  ? "Saving..."
+                  : "Save"}
               </button>
             )}
           </form>
@@ -248,11 +278,14 @@ export default function Setting() {
 
       {/* ================= PASSWORD TAB ================= */}
       {activeTab === "password" && (
-        <form onSubmit={handleSavePassword} className="max-w-xl space-y-6">
+        <form
+          onSubmit={handleSavePassword}
+          className="max-w-xl space-y-6"
+        >
           <InputField
             label="Current Password"
             type="password"
-            placeholder="Enter your current password"
+            placeholder="Enter current password"
             value={passwordForm.oldPassword}
             onChange={(e) =>
               setPasswordForm({
@@ -264,7 +297,7 @@ export default function Setting() {
           <InputField
             label="New Password"
             type="password"
-            placeholder="Enter your new password"
+            placeholder="Enter new password"
             value={passwordForm.newPassword}
             onChange={(e) =>
               setPasswordForm({
@@ -276,7 +309,7 @@ export default function Setting() {
           <InputField
             label="Confirm Password"
             type="password"
-            placeholder="Confirm your new password"
+            placeholder="Confirm new password"
             value={passwordForm.confirmPassword}
             onChange={(e) =>
               setPasswordForm({
@@ -285,12 +318,15 @@ export default function Setting() {
               })
             }
           />
+
           <button
             type="submit"
             disabled={passwordLoading}
-            className="bg-[#05DF72] px-8 py-2 text-lg border border-[#05DF72] rounded-xl text-white cursor-pointer hover:bg-[#05DF72CC]"
+            className="bg-[#05DF72] px-8 py-3 rounded-xl text-white cursor-pointer hover:bg-[#05DF72CC] disabled:bg-[#05DF7299]"
           >
-            {passwordLoading ? "Saving..." : "Save"}
+            {passwordLoading
+              ? "Saving..."
+              : "Save"}
           </button>
         </form>
       )}

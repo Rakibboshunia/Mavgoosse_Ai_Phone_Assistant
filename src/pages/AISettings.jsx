@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { AuthContext } from "../provider/AuthContext";
 import TimeSelector from "../components/TimeSelector";
+import toast from "react-hot-toast";
 import {
   getAIBehaviorApi,
   createAIBehaviorApi,
@@ -58,7 +59,7 @@ const fromBusinessHoursArray = (arr = []) => {
 
 export default function AISettings() {
   const { getActiveStoreId } = useContext(AuthContext);
-  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
+  const storeId = getActiveStoreId();
 
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -88,16 +89,22 @@ export default function AISettings() {
 
   const [newKeyword, setNewKeyword] = useState("");
 
+  const firstLoadRef = useRef(true);
+
   /* ================= LOAD CONFIG ================= */
 
   useEffect(() => {
     if (!storeId) return;
-    loadConfig();
+
+    loadConfig(!firstLoadRef.current);
+    firstLoadRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
-  const loadConfig = async () => {
+  const loadConfig = async (showToast = false) => {
     try {
+      setLoading(true);
+
       const res = await getAIBehaviorApi(storeId);
       const data = res.data;
 
@@ -110,20 +117,34 @@ export default function AISettings() {
         closed: data.greetings?.closed_hours_message || "",
       });
 
-      setBusinessHours(fromBusinessHoursArray(data.business_hours || []));
+      setBusinessHours(
+        fromBusinessHoursArray(data.business_hours || [])
+      );
 
       setEscalation({
-        retryAttempts: data.retry_attempts_before_transfer || 3,
+        retryAttempts:
+          data.retry_attempts_before_transfer || 3,
         fallbackResponse: data.fallback_response || "",
         keywords:
-          data.auto_transfer_keywords?.map((k) => k.keyword) || [],
+          data.auto_transfer_keywords?.map((k) => k.keyword) ||
+          [],
       });
+
+      if (showToast) {
+        toast.success("AI settings updated for selected store");
+      }
     } catch (err) {
       if (err.response?.status === 404) {
-        setNotFound(true); // AI behavior not created yet
+        setNotFound(true);
+        if (showToast) {
+          toast("No AI settings found for this store");
+        }
       } else {
         console.error("Failed to load AI behavior", err);
+        toast.error("Failed to load AI settings");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -131,7 +152,7 @@ export default function AISettings() {
 
   const handleSaveSettings = async () => {
     if (!storeId) {
-      alert("Please select a store first");
+      toast.error("Please select a store first");
       return;
     }
 
@@ -142,14 +163,14 @@ export default function AISettings() {
       if (notFound) {
         await createAIBehaviorApi(storeId, payload);
         setNotFound(false);
-        alert("AI Settings created successfully ✅");
+        toast.success("AI Settings created successfully ✅");
       } else {
         await updateAIBehaviorApi(storeId, payload);
-        alert("AI Settings saved successfully ✅");
+        toast.success("AI Settings saved successfully ✅");
       }
     } catch (err) {
       console.error(err.response?.data || err);
-      alert("Failed to save AI Settings ❌");
+      toast.error("Failed to save AI Settings ❌");
     } finally {
       setLoading(false);
     }
@@ -167,9 +188,7 @@ export default function AISettings() {
     },
     business_hours: toBusinessHoursArray(businessHours),
     auto_transfer_keywords: [...new Set(escalation.keywords)].map(
-      (k) => ({
-        keyword: k,
-      })
+      (k) => ({ keyword: k })
     ),
   });
 
@@ -198,7 +217,9 @@ export default function AISettings() {
   if (!storeId) {
     return (
       <div className="p-10 text-center text-white">
-        <h2 className="text-xl font-bold mb-2">No store selected</h2>
+        <h2 className="text-xl font-bold mb-2">
+          No store selected
+        </h2>
         <p>Please select a store to configure AI behavior.</p>
       </div>
     );
@@ -215,7 +236,10 @@ export default function AISettings() {
           <textarea
             value={greetings.opening}
             onChange={(e) =>
-              setGreetings({ ...greetings, opening: e.target.value })
+              setGreetings({
+                ...greetings,
+                opening: e.target.value,
+              })
             }
             className="w-full mb-3 p-4 rounded-xl"
             placeholder="Opening greeting"
@@ -223,7 +247,10 @@ export default function AISettings() {
           <textarea
             value={greetings.closed}
             onChange={(e) =>
-              setGreetings({ ...greetings, closed: e.target.value })
+              setGreetings({
+                ...greetings,
+                closed: e.target.value,
+              })
             }
             className="w-full p-4 rounded-xl"
             placeholder="Closed message"
@@ -233,11 +260,11 @@ export default function AISettings() {
         {/* Tone */}
         <div className="bg-[#1D293D80] p-6 rounded-2xl">
           <h2 className="text-white font-bold mb-4">Tone</h2>
-          {["friendly", "professional", "sales"].map((t) => (
+          {["Friendly", "Professional", "Sales"].map((t) => (
             <button
               key={t}
               onClick={() => setTone(t)}
-              className={`block w-full mb-2 p-3 rounded-xl ${
+              className={`block w-full mb-2 p-3 rounded-xl cursor-pointer hover:bg-slate-700 ${
                 tone === t
                   ? "bg-blue-600 text-white"
                   : "bg-slate-800 text-gray-400"
@@ -257,7 +284,9 @@ export default function AISettings() {
         <div className="grid md:grid-cols-3 gap-4">
           {Object.entries(businessHours).map(([day, times]) => (
             <div key={day}>
-              <p className="text-white capitalize mb-1">{day}</p>
+              <p className="text-white capitalize mb-1">
+                {day}
+              </p>
               <div className="flex gap-2">
                 <TimeSelector
                   value={times.start}
@@ -297,7 +326,7 @@ export default function AISettings() {
               retryAttempts: Number(e.target.value),
             })
           }
-          className="mb-4 p-3 rounded-xl"
+          className="mb-4 p-2 rounded-xl bg-gray-700 text-white cursor-pointer hover:bg-gray-600"
         >
           {[1, 2, 3, 4, 5].map((n) => (
             <option key={n} value={n}>
@@ -327,7 +356,7 @@ export default function AISettings() {
           />
           <button
             onClick={handleAddKeyword}
-            className="bg-blue-600 text-white px-4 rounded-xl"
+            className="bg-blue-600 text-white px-4 rounded-xl cursor-pointer hover:bg-blue-700"
           >
             Add
           </button>
@@ -349,7 +378,7 @@ export default function AISettings() {
       <button
         onClick={handleSaveSettings}
         disabled={loading}
-        className="w-full bg-green-500 text-white py-3 rounded-xl font-bold"
+        className="w-full bg-green-500 text-white py-3 rounded-xl font-bold cursor-pointer hover:bg-green-600 disabled:bg-green-400"
       >
         {loading
           ? "Saving..."

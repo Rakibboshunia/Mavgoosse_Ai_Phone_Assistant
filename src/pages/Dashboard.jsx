@@ -1,4 +1,6 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
+import toast from "react-hot-toast";
+
 import DashboardStatus from "../components/DashboardStatus";
 import DropDown from "../components/DropDown";
 import Graph from "../components/Graph";
@@ -13,9 +15,10 @@ import {
 import { AuthContext } from "../provider/AuthContext";
 
 export default function Dashboard() {
-  const { role, getActiveStoreId } = useContext(AuthContext);
+  const { role, getActiveStoreId, selectedStore } =
+    useContext(AuthContext);
 
-  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
+  const storeId = getActiveStoreId();
 
   const [selectedTime, setSelectedTime] = useState("today");
   const [loading, setLoading] = useState(false);
@@ -24,20 +27,33 @@ export default function Dashboard() {
   const [totalCalls, setTotalCalls] = useState(0);
   const [storeSummary, setStoreSummary] = useState(null);
 
+  const prevStoreRef = useRef(null);
+
   const options = [
     { label: "Today", value: "today" },
     { label: "Past Week", value: "past-week" },
     { label: "Last Year", value: "last-year" },
   ];
 
-  /* ================= FETCH DASHBOARD DATA ================= */
+  /* ================= STORE CHANGE DETECT ================= */
   useEffect(() => {
-    // ⛔ Super Admin must select a store first
-    if (role === "SUPER_ADMIN" && !storeId) return;
-
     if (!storeId) return;
 
+    // 🔥 only fire when store actually changes
+    if (prevStoreRef.current && prevStoreRef.current !== storeId) {
+      toast.loading("Switching store...", { id: "store-change" });
+    }
+
+    prevStoreRef.current = storeId;
+  }, [storeId]);
+
+  /* ================= FETCH DASHBOARD ================= */
+  useEffect(() => {
+    if (!storeId) return;
+    if (role === "SUPER_ADMIN" && !storeId) return;
+
     fetchDashboardData(storeId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, selectedTime]);
 
   const fetchDashboardData = async (activeStoreId) => {
@@ -45,18 +61,23 @@ export default function Dashboard() {
       setLoading(true);
 
       const [trendRes, summaryRes] = await Promise.all([
-        getCallTrendsApi(activeStoreId),
+        getCallTrendsApi(activeStoreId, { range: selectedTime }),
         getStoreSummaryApi(activeStoreId),
       ]);
 
-      // Call Trends
       setTrendData(trendRes?.data?.trend || {});
       setTotalCalls(trendRes?.data?.total_calls || 0);
-
-      // Store Summary
       setStoreSummary(summaryRes?.data?.[0] || null);
+
+      toast.success(
+        `Dashboard loaded for ${selectedStore?.name || "store"}`,
+        { id: "store-change" }
+      );
     } catch (error) {
       console.error("Dashboard API Error:", error);
+      toast.error("Failed to load dashboard data", {
+        id: "store-change",
+      });
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,15 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import { Icon } from "@iconify/react";
+import toast from "react-hot-toast";
+
 import { AuthContext } from "../provider/AuthContext";
 import AddPriceModal from "../components/AddPriceModal";
+
 import {
   getCategoriesApi,
   getBrandsApi,
@@ -12,9 +20,10 @@ import {
 } from "../libs/pricing.api";
 
 export default function PricingList() {
-  const { role, getActiveStoreId } = useContext(AuthContext);
+  const { role, getActiveStoreId, selectedStore } =
+    useContext(AuthContext);
 
-  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
+  const storeId = getActiveStoreId();
   const isAdmin = role === "SUPER_ADMIN";
 
   const [pricingData, setPricingData] = useState([]);
@@ -34,10 +43,32 @@ export default function PricingList() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  const prevStoreRef = useRef(null);
+
+  /* ================= STORE CHANGE DETECT ================= */
+  useEffect(() => {
+    if (!storeId) return;
+
+    if (
+      prevStoreRef.current &&
+      prevStoreRef.current !== storeId
+    ) {
+      toast.loading("Loading pricing for new store...", {
+        id: "pricing-store",
+      });
+    }
+
+    prevStoreRef.current = storeId;
+  }, [storeId]);
+
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
-    getCategoriesApi().then((res) => setCategories(res.data || []));
-    getRepairTypesApi().then((res) => setRepairTypes(res.data || []));
+    getCategoriesApi().then((res) =>
+      setCategories(res.data || [])
+    );
+    getRepairTypesApi().then((res) =>
+      setRepairTypes(res.data || [])
+    );
   }, []);
 
   /* ================= CATEGORY → BRANDS ================= */
@@ -51,7 +82,8 @@ export default function PricingList() {
 
     getBrandsApi(filters.category).then((res) => {
       const validBrands = (res.data || []).filter(
-        (b) => String(b.category) === String(filters.category)
+        (b) =>
+          String(b.category) === String(filters.category)
       );
       setBrands(validBrands);
     });
@@ -69,7 +101,8 @@ export default function PricingList() {
 
     getDeviceModelsApi(filters.brand).then((res) => {
       const validModels = (res.data || []).filter(
-        (m) => String(m.brand) === String(filters.brand)
+        (m) =>
+          String(m.brand) === String(filters.brand)
       );
       setModels(validModels);
     });
@@ -79,7 +112,6 @@ export default function PricingList() {
 
   /* ================= FETCH PRICE LIST ================= */
   const fetchPriceList = async () => {
-    // ⛔ Super Admin must select store first
     if (role === "SUPER_ADMIN" && !storeId) return;
     if (!storeId) return;
 
@@ -87,16 +119,28 @@ export default function PricingList() {
       setLoading(true);
 
       const res = await getPriceListApi({
-        store: storeId, // 🔥 STORE SCOPED
+        store: storeId,
         category: filters.category || undefined,
         brand: filters.brand || undefined,
         model: filters.model || undefined,
         repair_type: filters.repairType || undefined,
       });
 
-      setPricingData(Array.isArray(res.data) ? res.data : []);
+      setPricingData(
+        Array.isArray(res.data) ? res.data : []
+      );
+
+      toast.success(
+        `Pricing loaded for ${
+          selectedStore?.name || "store"
+        }`,
+        { id: "pricing-store" }
+      );
     } catch (err) {
-      console.error("❌ Price List Error:", err?.response?.data || err);
+      console.error(err);
+      toast.error("Failed to load pricing", {
+        id: "pricing-store",
+      });
     } finally {
       setLoading(false);
     }
@@ -104,24 +148,27 @@ export default function PricingList() {
 
   /* ================= STORE / FILTER CHANGE ================= */
   useEffect(() => {
+    if (!storeId) return;
+
     setPricingData([]);
     fetchPriceList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, filters]);
 
   /* ================= STATUS TOGGLE ================= */
   const toggleStatus = async (item) => {
     try {
       const newStatus =
-        item.status === "ACTIVE" ? "DISABLED" : "ACTIVE";
+        item.status === "ACTIVE"
+          ? "DISABLED"
+          : "ACTIVE";
 
-      await updatePriceApi(item.id, {
-        status: newStatus,
-        store: storeId, // 🔥 ensure store aware
-      });
+      await updatePriceApi(item.id, { status: newStatus }, storeId);
 
       fetchPriceList();
     } catch (err) {
       console.error(err);
+      toast.error("Failed to update price status");
     }
   };
 
@@ -129,7 +176,10 @@ export default function PricingList() {
   if (role === "SUPER_ADMIN" && !storeId) {
     return (
       <div className="flex items-center justify-center h-[60vh] text-[#90A1B9]">
-        <p>Please select a store from the sidebar to manage pricing.</p>
+        <p>
+          Please select a store from the sidebar to
+          manage pricing.
+        </p>
       </div>
     );
   }
@@ -138,15 +188,17 @@ export default function PricingList() {
     <div className="p-6 bg-gradient-to-br from-[#0A1230] via-[#0E1B4D] to-[#070E26] min-h-screen">
       {/* ================= FILTER BAR ================= */}
       <div className="flex flex-wrap gap-3 mb-6">
-        {/* Category */}
         <select
           value={filters.category}
           onChange={(e) =>
-            setFilters({ ...filters, category: e.target.value })
+            setFilters({
+              ...filters,
+              category: e.target.value,
+            })
           }
           className="bg-[#0F1B3D] text-white px-4 py-2 rounded-full border border-[#2B7FFF40]"
         >
-          <option value="">All Categories</option>
+          <option value="" className="">All Categories</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -154,11 +206,13 @@ export default function PricingList() {
           ))}
         </select>
 
-        {/* Brand */}
         <select
           value={filters.brand}
           onChange={(e) =>
-            setFilters({ ...filters, brand: e.target.value })
+            setFilters({
+              ...filters,
+              brand: e.target.value,
+            })
           }
           disabled={!filters.category}
           className="bg-[#0F1B3D] text-white px-4 py-2 rounded-full border border-[#2B7FFF40]"
@@ -171,11 +225,13 @@ export default function PricingList() {
           ))}
         </select>
 
-        {/* Model */}
         <select
           value={filters.model}
           onChange={(e) =>
-            setFilters({ ...filters, model: e.target.value })
+            setFilters({
+              ...filters,
+              model: e.target.value,
+            })
           }
           disabled={!filters.brand}
           className="bg-[#0F1B3D] text-white px-4 py-2 rounded-full border border-[#2B7FFF40]"
@@ -188,11 +244,13 @@ export default function PricingList() {
           ))}
         </select>
 
-        {/* Repair Type */}
         <select
           value={filters.repairType}
           onChange={(e) =>
-            setFilters({ ...filters, repairType: e.target.value })
+            setFilters({
+              ...filters,
+              repairType: e.target.value,
+            })
           }
           className="bg-[#0F1B3D] text-white px-4 py-2 rounded-full border border-[#2B7FFF40]"
         >
@@ -207,7 +265,7 @@ export default function PricingList() {
         {isAdmin && (
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="ml-auto bg-[#2B7FFF] text-white px-6 py-2 rounded-full flex items-center gap-2"
+            className="ml-auto bg-[#2B7FFF] text-white px-6 py-2 rounded-full flex items-center gap-2 cursor-pointer hover:bg-[#2B7FFFCC]"
           >
             <Icon icon="mdi:plus" />
             Add Price
@@ -228,7 +286,9 @@ export default function PricingList() {
         </div>
 
         {loading ? (
-          <div className="text-center py-10 text-white">Loading...</div>
+          <div className="text-center py-10 text-white">
+            Loading pricing...
+          </div>
         ) : pricingData.length === 0 ? (
           <div className="text-center py-10 text-gray-400">
             No price found for selected filters
@@ -239,8 +299,12 @@ export default function PricingList() {
               key={item.id}
               className="grid grid-cols-7 items-center px-6 py-4 border-b border-[#2B7FFF20]"
             >
-              <div className="text-white">{item.category_name}</div>
-              <div className="text-white">{item.brand_name}</div>
+              <div className="text-white">
+                {item.category_name}
+              </div>
+              <div className="text-white">
+                {item.brand_name}
+              </div>
               <div className="text-white">
                 {item.device_model_name}
               </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import NotificationFilters from "../components/NotificationFilters";
 import DetailedNotificationCard from "../components/DetailedNotificationCard";
 import {
@@ -7,36 +7,38 @@ import {
 } from "../libs/notifications.api";
 import { mapNotification } from "../utils/notificationMapper";
 import { AuthContext } from "../provider/AuthContext";
+import toast from "react-hot-toast";
 
 export default function Notifications() {
-  /* ================= STORE ================= */
-  const { getActiveStoreId, role } = useContext(AuthContext);
-  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE ID
+  /* ================= CONTEXT ================= */
+  const { role, getActiveStoreId } = useContext(AuthContext);
+  const storeId = getActiveStoreId(); // only for refetch trigger
 
   /* ================= STATE ================= */
   const [activeFilter, setActiveFilter] = useState("all");
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  /* ================= LOAD ================= */
-  useEffect(() => {
-    if (!storeId) return;
-    fetchNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFilter, storeId]);
+  const firstLoadRef = useRef(true);
 
-  const fetchNotifications = async () => {
+  /* ================= FETCH ================= */
+  const fetchNotifications = async (showToast = false) => {
     try {
       setLoading(true);
 
-      const params = {
-        store: storeId, // 🔥 STORE SCOPED
-      };
+      const params = {};
 
+      // ✅ ONLY unread has status param
       if (activeFilter === "unread") {
         params.status = "unread";
-      } else if (activeFilter !== "all") {
-        params.category = activeFilter.toUpperCase(); // calls → CALLS
+      }
+
+      // ✅ ONLY category filters (NOT all / unread)
+      if (
+        activeFilter !== "all" &&
+        activeFilter !== "unread"
+      ) {
+        params.category = activeFilter.toUpperCase();
       }
 
       const { data } = await getNotificationsApi(params);
@@ -44,15 +46,44 @@ export default function Notifications() {
       setNotifications(
         Array.isArray(data) ? data.map(mapNotification) : []
       );
+
+      if (showToast) {
+        toast.success("Notifications updated", {
+          id: "notifications-refetch",
+        });
+      }
     } catch (error) {
-      console.error("Notification fetch failed", error);
+      console.error(
+        "Notification fetch failed",
+        error?.response?.data || error
+      );
+      toast.error("Failed to load notifications", {
+        id: "notifications-error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= ACTIONS ================= */
+  /* ================= FILTER CHANGE ================= */
+  useEffect(() => {
+    fetchNotifications(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter]);
 
+  /* ================= STORE CHANGE ================= */
+  useEffect(() => {
+    if (role === "SUPER_ADMIN" && !storeId) return;
+
+    setNotifications([]);
+
+    fetchNotifications(!firstLoadRef.current);
+
+    firstLoadRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeId]);
+
+  /* ================= ACTIONS ================= */
   const handleMarkRead = async (id) => {
     try {
       await markNotificationReadApi(id);
@@ -67,7 +98,7 @@ export default function Notifications() {
   };
 
   const handleDismiss = (id) => {
-    // ❌ backend delete নাই → UI only
+    // backend delete নেই → UI only
     setNotifications((prev) =>
       prev.filter((n) => n.id !== id)
     );

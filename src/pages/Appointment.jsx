@@ -1,8 +1,14 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useRef,
+} from "react";
+import toast from "react-hot-toast";
+
 import AppointmentStatsCard from "../components/AppointmentStatsCard";
 import BookingLink from "../components/BookingLink";
 import AppointmentCard from "../components/AppointmentCard";
-import toast from "react-hot-toast";
 
 import { getAppointmentsApi } from "../libs/appointments.api";
 import { adaptAppointment } from "../utils/appointmentsAdapter";
@@ -16,7 +22,25 @@ export default function Appointment() {
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(false);
 
-  /* ================= FETCH ================= */
+  const prevStoreRef = useRef(null);
+
+  /* ================= STORE CHANGE DETECT ================= */
+  useEffect(() => {
+    if (!storeId) return;
+
+    if (
+      prevStoreRef.current &&
+      prevStoreRef.current !== storeId
+    ) {
+      toast.loading("Loading appointments for new store...", {
+        id: "appointments-store",
+      });
+    }
+
+    prevStoreRef.current = storeId;
+  }, [storeId]);
+
+  /* ================= FETCH APPOINTMENTS ================= */
   const fetchAppointments = async () => {
     if (!storeId) return;
 
@@ -24,7 +48,7 @@ export default function Appointment() {
       setLoading(true);
 
       const res = await getAppointmentsApi({
-        store: storeId, // 🔥 IMPORTANT
+        store: storeId, // 🔥 STORE SCOPED
       });
 
       const adapted = Array.isArray(res.data)
@@ -32,14 +56,31 @@ export default function Appointment() {
         : [];
 
       setAppointments(adapted);
+
+      toast.success(
+        `Appointments loaded for ${
+          selectedStore?.name || "store"
+        }`,
+        { id: "appointments-store" }
+      );
     } catch (err) {
-      toast.error("Failed to load appointments");
+      console.error(err);
+      toast.error("Failed to load appointments", {
+        id: "appointments-store",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  /* ================= INITIAL + STORE CHANGE ================= */
   useEffect(() => {
+    if (!storeId) return;
+
+    // reset on store change
+    setAppointments([]);
+    setFilter("all");
+
     fetchAppointments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
@@ -65,7 +106,7 @@ export default function Appointment() {
   /* ================= UI ================= */
   return (
     <div className="space-y-8 pb-12">
-      {/* STATS */}
+      {/* ================= STATS ================= */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AppointmentStatsCard
           title="Total Booked"
@@ -77,7 +118,10 @@ export default function Appointment() {
 
         <AppointmentStatsCard
           title="Pending"
-          value={appointments.filter((a) => a.status === "pending").length}
+          value={
+            appointments.filter((a) => a.status === "pending")
+              .length
+          }
           subtext="Awaiting action"
           icon="mdi:alert-circle-outline"
           color="text-[#FF8904]"
@@ -85,26 +129,35 @@ export default function Appointment() {
 
         <AppointmentStatsCard
           title="Completed"
-          value={appointments.filter((a) => a.status === "confirmed").length}
+          value={
+            appointments.filter(
+              (a) => a.status === "confirmed"
+            ).length
+          }
           subtext="Confirmed"
           icon="mdi:check-decagram-outline"
           color="text-[#05DF72]"
         />
       </div>
 
-      {/* BOOKING LINK */}
+      {/* ================= BOOKING LINK ================= */}
       <BookingLink
         url={`https://techstore.com/book?store=${storeId}`}
       />
 
-      {/* LIST */}
+      {/* ================= LIST ================= */}
       {loading ? (
-        <p className="text-center text-[#90A1B9]">Loading...</p>
+        <p className="text-center text-[#90A1B9]">
+          Loading appointments...
+        </p>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {filteredAppointments.length ? (
             filteredAppointments.map((app) => (
-              <AppointmentCard key={app.id} appointment={app} />
+              <AppointmentCard
+                key={app.id}
+                appointment={app}
+              />
             ))
           ) : (
             <div className="col-span-full text-center text-[#90A1B9]">

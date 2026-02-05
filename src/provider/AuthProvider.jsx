@@ -17,8 +17,7 @@ const AuthProvider = ({ children }) => {
   });
 
   /* ================= ROLE ================= */
-  const rawRole = user?.role || user?.user?.role;
-  const role = rawRole ? rawRole.toUpperCase() : null;
+  const role = user?.role || user?.user?.role || null;
 
   /* ================= LOGIN ================= */
   const login = (authData) => {
@@ -82,7 +81,7 @@ const AuthProvider = ({ children }) => {
         fetchProfile,
         selectedStore,
         selectStore,
-        getActiveStoreId, // 🔥 KEY THING
+        getActiveStoreId,
       }}
     >
       {children}
