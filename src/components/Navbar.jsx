@@ -31,7 +31,6 @@ export default function Navbar() {
 
   const userRole = getUserRole();
 
-  /* 🔹 FETCH STORES (SUPER ADMIN ONLY) */
   useEffect(() => {
     if (userRole === "SuperAdmin" && !hasFetchedStores.current) {
       hasFetchedStores.current = true;
@@ -62,7 +61,6 @@ export default function Navbar() {
     { title: "Appointments", icon: "hugeicons:appointment-01", activeI: "mingcute:schedule-fill", path: "/appointment", roles: ["SuperAdmin", "StoreManager", "Staff"] },
     { title: "Pricing Management", icon: "ph:currency-dollar-bold", activeI: "heroicons:currency-dollar-16-solid", path: "/pricing-management", roles: ["SuperAdmin", "StoreManager", "Staff"] },
     { title: "AI Behavior Settings", icon: "ant-design:robot-outlined", activeI: "ant-design:robot-filled", path: "/ai-behavior-settings", roles: ["SuperAdmin", "StoreManager"] },
-    { title: "API Settings", icon: "solar:phone-calling-outline", activeI: "solar:phone-calling-bold", path: "/api-settings", roles: ["SuperAdmin", "StoreManager"] },
     { title: "User Management", icon: "rivet-icons:user-group", activeI: "rivet-icons:user-group-solid", path: "/user-management", roles: ["SuperAdmin"] },
     { title: "Settings", icon: "qlementine-icons:settings-16", activeI: "clarity:settings-solid", path: "/setting", roles: ["SuperAdmin", "StoreManager", "Staff"] },
   ];
@@ -101,8 +99,8 @@ export default function Navbar() {
           {isStoreModalOpen && (
             <div className="absolute top-28 left-5 right-5 
                 bg-[#0F172A] border border-[#2B7FFF33] 
-                rounded-xl p-3 z-[9999]
-                max-h-[400px] overflow-y-auto">
+                rounded-xl p-3 z-9999
+                max-h-100 overflow-y-auto">
               {loadingStores && (
                 <p className="text-center text-sm text-gray-400">
                   Loading stores...

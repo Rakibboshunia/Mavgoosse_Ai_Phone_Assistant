@@ -166,7 +166,7 @@ export default function Dashboard() {
       </div>
 
       {/* ================= BOTTOM SECTION ================= */}
-      <div className="flex items-stretch justify-center gap-x-8 mt-8">
+      {/* <div className="flex items-stretch justify-center gap-x-8 mt-8">
         <div className="bg-[#0F172B80] border-2 border-[#2B7FFF33] p-8 rounded-2xl w-1/2">
           <h2 className="text-xl mb-4">Recent Activity</h2>
 
@@ -180,7 +180,7 @@ export default function Dashboard() {
         <div className="w-1/2">
           <TopRepairRequests />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

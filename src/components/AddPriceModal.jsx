@@ -70,7 +70,7 @@ export default function AddPriceModal({ onClose, onSuccess }) {
       setLoading(true);
 
       await createPriceApi({
-        store: storeId,                 // 🔥 REQUIRED
+        store: storeId,            
         device_model: form.model,
         repair_type: form.repairType,
         price: Number(form.price),

@@ -14,7 +14,6 @@ import Appointment from "../pages/Appointment";
 import Notifications from "../pages/Notifications";
 import Setting from "../pages/Setting";
 import AISettings from "../pages/AISettings";
-import APISettings from "../pages/APISettings";
 import UserManagement from "../pages/UserManagement";
 
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -85,14 +84,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER"]}>
             <AISettings />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/api-settings",
-        element: (
-          <ProtectedRoute allowedRoles={["SUPER_ADMIN", "STORE_MANAGER"]}>
-            <APISettings />
           </ProtectedRoute>
         ),
       },
