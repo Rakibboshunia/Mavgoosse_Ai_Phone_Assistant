@@ -70,7 +70,7 @@ export default function PricingList() {
     prevStoreRef.current = storeId;
   }, [storeId]);
 
-  /* ================= INITIAL LOAD ================= */
+  /* ================= INITIAL LOAD ============ */
   useEffect(() => {
     getCategoriesApi().then((res) =>
       setCategories(res.data || [])
@@ -80,7 +80,7 @@ export default function PricingList() {
     );
   }, []);
 
-  /* ================= CATEGORY → BRANDS ================= */
+  /* ================= CATEGORY → BRANDS =========== */
   useEffect(() => {
     if (!filters.category) {
       setBrands([]);
@@ -100,7 +100,7 @@ export default function PricingList() {
     setFilters((f) => ({ ...f, brand: "", model: "" }));
   }, [filters.category]);
 
-  /* ================= BRAND → MODELS ================= */
+  /* ================= BRAND → MODELS ============ */
   useEffect(() => {
     if (!filters.brand) {
       setModels([]);
@@ -346,16 +346,14 @@ export default function PricingList() {
                 </button>
               </div>
 
-            
-                {editingItem && (
-        <EditPriceModal
-          item={editingItem}
-          storeId={storeId}
-          onClose={() => setEditingItem(null)}
-          onSuccess={fetchPriceList}
-        />
-      )}
-   
+              {editingItem && (
+                <EditPriceModal
+                  item={editingItem}
+                  storeId={storeId}
+                  onClose={() => setEditingItem(null)}
+                  onSuccess={fetchPriceList}
+                />
+              )}
 
               <div className="text-gray-400 text-sm">
                 {new Date(item.updated_at).toISOString().split("T")[0]}
@@ -369,7 +367,6 @@ export default function PricingList() {
                   <Icon icon="mdi:pencil" width={18} />
                 </button>
               </div>
-              
             </div>
           ))
         )}
@@ -388,8 +385,7 @@ export default function PricingList() {
           onSuccess={fetchPriceList}
         />
       )}
-
-      
     </div>
   );
 }
+
