@@ -8,32 +8,42 @@ export default function AddUserModal({ onClose, onSave }) {
     role: "Staff",
   });
 
-  const handleSubmit = () => {
-  if (!formData.name.trim() || !formData.email.trim()) {
-    alert("Please fill in all required fields");
-    return;
-  }
+  const [creating, setCreating] = useState(false); // ✅ NEW
 
-  onSave({
-    name: formData.name.trim(),
-    email: formData.email.trim(),
-    role: formData.role,
-    password: "Temp@1234", // 👈 REQUIRED
-  });
-};
+  const handleSubmit = async () => {
+    if (!formData.name.trim() || !formData.email.trim()) {
+      alert("Please fill in all required fields");
+      return;
+    }
 
+    try {
+      setCreating(true); // ✅ start loading
+
+      await onSave({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        role: formData.role,
+        password: "Temp@1234",
+      });
+
+    } finally {
+      setCreating(false); // ✅ stop loading
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-[#1D293D] border-2 border-[#2B7FFF33] rounded-2xl p-6 max-w-2xl w-full mx-4">
+        
         {/* HEADER */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 ">
           <Icon icon="mdi:account-plus" className="text-[#05DF72]" width={28} />
           <h3 className="text-xl font-bold text-white">Add New User</h3>
         </div>
 
         {/* FORM */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
           {/* First Name */}
           <div>
             <label className="text-[#90A1B9] text-sm font-medium mb-2 block">
@@ -53,7 +63,7 @@ export default function AddUserModal({ onClose, onSave }) {
             />
           </div>
 
-        {/* Last Name */}
+          {/* Last Name */}
           <div>
             <label className="text-[#90A1B9] text-sm font-medium mb-2 block">
               Last Name
@@ -111,15 +121,25 @@ export default function AddUserModal({ onClose, onSave }) {
         <div className="flex gap-3 mt-8">
           <button
             onClick={onClose}
-            className="flex-1 bg-[#0F172B60] border border-[#2B7FFF15] text-white px-4 py-3 rounded-xl hover:bg-[#2B7FFF15] transition-all"
+            disabled={creating}
+            className="flex-1 bg-[#0F172B60] border border-[#2B7FFF15] text-white px-4 py-3 rounded-xl hover:bg-[#2B7FFF15] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
+
           <button
             onClick={handleSubmit}
-            className="flex-1 bg-[#05DF72] text-white px-4 py-3 rounded-xl hover:bg-[#05DF72CC] transition-all"
+            disabled={creating}
+            className="flex-1 bg-[#05DF72] text-white px-4 py-3 rounded-xl hover:bg-[#05DF72CC] transition-all cursor-pointer disabled:bg-[#05DF72AA] disabled:cursor-not-allowed"
           >
-            Create User
+            {creating ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                Creating...
+              </span>
+            ) : (
+              "Create User"
+            )}
           </button>
         </div>
       </div>

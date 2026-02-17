@@ -19,7 +19,7 @@ export default function BookingLink({ url }) {
                 </div>
                 <button
                     onClick={handleCopy}
-                    className="bg-linear-to-r from-[#2B7FFF33] to-[#2B7FFF10] hover:from-[#2B7FFF50] border border-[#2B7FFF33] text-white px-8 py-4 rounded-xl flex items-center gap-3 font-medium transition-all shrink-0"
+                    className="bg-linear-to-r from-[#2B7FFF33] to-[#2B7FFF10] hover:from-[#2B7FFF50] border border-[#2B7FFF33] text-white px-8 py-4 rounded-xl flex items-center gap-3 font-medium transition-all shrink-0 cursor-pointer"
                 >
                     <Icon icon={copied ? "mdi:check-all" : "mdi:content-copy"} width={20} />
                     <span>{copied ? 'Copied!' : 'Copy Link'}</span>

@@ -1,13 +1,21 @@
-import axios from "./axios"; 
+import axios from "./axios";
 
-export const getCallTrendsApi = (storeId) => {
+/* ================= CALL TRENDS ================= */
+export const getCallTrendsApi = (storeId, params = {}) => {
   return axios.get(`/api/v1/call/call-trends/`, {
-    params: { store: storeId },
+    params: {
+      store: storeId,
+      range: params.range || "today",
+    },
   });
 };
 
-export const getStoreSummaryApi = (storeId) => {
+/* ================= STORE SUMMARY ================= */
+export const getStoreSummaryApi = (storeId, params = {}) => {
   return axios.get(`/api/v1/call/store-summary/`, {
-    params: { store_id: storeId },
+    params: {
+      store_id: storeId,
+      range: params.range || "today",
+    },
   });
 };

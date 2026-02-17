@@ -97,7 +97,7 @@ export default function Setting() {
       }
 
       await updateProfileApi(formData);
-      await fetchProfile(); // 🔥 GLOBAL SYNC
+      await fetchProfile(); 
 
       setIsEditing(false);
       setSelectedImage(null);
@@ -168,7 +168,7 @@ export default function Setting() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-2 ${
+            className={`pb-2 cursor-pointer ${
               activeTab === tab
                 ? "text-white"
                 : "text-[#90A1B9]"
@@ -184,7 +184,7 @@ export default function Setting() {
       {/* ================= PROFILE TAB ================= */}
       {activeTab === "profile" && (
         <div>
-          <p className="text-sm text-[#90A1B9] mb-4">
+          <p className="text-sm text-white mb-4">
             Profile Image
           </p>
 
@@ -198,7 +198,7 @@ export default function Setting() {
             </div>
 
             {isEditing ? (
-              <label className="cursor-pointer text-[#2B7FFF] text-sm">
+              <label className="cursor-pointer text-[#2B7FFF] text-md hover:bg-blue-500 hover:text-white hover:border-blue-500 border-2 border-[#2B7FFF33] rounded-lg p-2">
                 Change
                 <input
                   type="file"
@@ -214,7 +214,7 @@ export default function Setting() {
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-1.5 rounded-lg bg-[#2B7FFF15] text-[#2B7FFF] cursor-pointer text-sm"
+                className="px-4 py-1.5 rounded-lg bg-[#2B7FFF15] text-[#2B7FFF] cursor-pointer text-md hover:bg-blue-500 hover:text-white transition-all border-2 border-[#2B7FFF33]"
               >
                 Edit Profile
               </button>

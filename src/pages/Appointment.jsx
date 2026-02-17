@@ -15,8 +15,12 @@ import { adaptAppointment } from "../utils/appointmentsAdapter";
 import { AuthContext } from "../provider/AuthContext";
 
 export default function Appointment() {
-  const { selectedStore, role } = useContext(AuthContext);
-  const storeId = selectedStore?.id;
+  const { selectedStore, getActiveStoreId } =
+    useContext(AuthContext);
+
+  // ✅ DEFAULT STORE ID = 1
+  const activeStoreId =
+    getActiveStoreId?.() || selectedStore?.id || 1;
 
   const [appointments, setAppointments] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -26,29 +30,29 @@ export default function Appointment() {
 
   /* ================= STORE CHANGE DETECT ================= */
   useEffect(() => {
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
     if (
       prevStoreRef.current &&
-      prevStoreRef.current !== storeId
+      prevStoreRef.current !== activeStoreId
     ) {
       toast.loading("Loading appointments for new store...", {
         id: "appointments-store",
       });
     }
 
-    prevStoreRef.current = storeId;
-  }, [storeId]);
+    prevStoreRef.current = activeStoreId;
+  }, [activeStoreId]);
 
   /* ================= FETCH APPOINTMENTS ================= */
   const fetchAppointments = async () => {
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
     try {
       setLoading(true);
 
       const res = await getAppointmentsApi({
-        store: storeId, // 🔥 STORE SCOPED
+        store: activeStoreId,
       });
 
       const adapted = Array.isArray(res.data)
@@ -59,7 +63,7 @@ export default function Appointment() {
 
       toast.success(
         `Appointments loaded for ${
-          selectedStore?.name || "store"
+          selectedStore?.name || "Store 1"
         }`,
         { id: "appointments-store" }
       );
@@ -75,33 +79,20 @@ export default function Appointment() {
 
   /* ================= INITIAL + STORE CHANGE ================= */
   useEffect(() => {
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
-    // reset on store change
     setAppointments([]);
     setFilter("all");
 
     fetchAppointments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId]);
+  }, [activeStoreId]);
 
   /* ================= FILTER ================= */
   const filteredAppointments =
     filter === "all"
       ? appointments
       : appointments.filter((a) => a.status === filter);
-
-  /* ================= GUARD ================= */
-  if (role === "SUPER_ADMIN" && !storeId) {
-    return (
-      <div className="p-10 text-center text-[#90A1B9]">
-        <h2 className="text-xl font-bold mb-2">
-          No store selected
-        </h2>
-        <p>Please select a store to view appointments.</p>
-      </div>
-    );
-  }
 
   /* ================= UI ================= */
   return (
@@ -142,7 +133,7 @@ export default function Appointment() {
 
       {/* ================= BOOKING LINK ================= */}
       <BookingLink
-        url={`https://techstore.com/book?store=${storeId}`}
+        url={`https://techstore.com/book?store=${activeStoreId}`}
       />
 
       {/* ================= LIST ================= */}

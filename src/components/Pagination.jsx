@@ -22,7 +22,7 @@ const Pagination = ({
         <button
           key={page}
           onClick={() => handlePageClick(page)}
-          className={`px-3 py-2 rounded-lg text-sm font-medium transition
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer
             ${
               page === currentPage
                 ? "bg-[#2B7FFF] text-white"
@@ -76,7 +76,7 @@ const Pagination = ({
       <button
         onClick={() => handlePageClick(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer
           ${
             currentPage === 1
               ? "bg-gray-700 text-gray-500 cursor-not-allowed"
@@ -93,7 +93,7 @@ const Pagination = ({
       <button
         onClick={() => handlePageClick(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer
           ${
             currentPage === totalPages
               ? "bg-gray-700 text-gray-500 cursor-not-allowed"

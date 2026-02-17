@@ -1,18 +1,25 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useRef,
+} from "react";
 import NotificationFilters from "../components/NotificationFilters";
-import DetailedNotificationCard from "../components/DetailedNotificationCard";
+import NotificationCard from "../components/NotificatonCard";
 import {
+  deleteNotificationApi,
   getNotificationsApi,
   markNotificationReadApi,
 } from "../libs/notifications.api";
-import { mapNotification } from "../utils/notificationMapper";
 import { AuthContext } from "../provider/AuthContext";
 import toast from "react-hot-toast";
 
 export default function Notifications() {
   /* ================= CONTEXT ================= */
-  const { role, getActiveStoreId } = useContext(AuthContext);
-  const storeId = getActiveStoreId(); // only for refetch trigger
+  const { getActiveStoreId } = useContext(AuthContext);
+
+  // Default store fallback
+  const storeId = getActiveStoreId() || 1;
 
   /* ================= STATE ================= */
   const [activeFilter, setActiveFilter] = useState("all");
@@ -26,26 +33,42 @@ export default function Notifications() {
     try {
       setLoading(true);
 
-      const params = {};
+      const params = {
+        store: storeId,
+        status: "all",
+      };
 
-      // ✅ ONLY unread has status param
-      if (activeFilter === "unread") {
-        params.status = "unread";
+      // 🔹 Status filter
+      if (activeFilter === "read" || activeFilter === "unread") {
+        params.status = activeFilter;
       }
 
-      // ✅ ONLY category filters (NOT all / unread)
+      // 🔹 Category filter
       if (
         activeFilter !== "all" &&
+        activeFilter !== "read" &&
         activeFilter !== "unread"
       ) {
         params.category = activeFilter.toUpperCase();
+        params.status = "all";
       }
 
       const { data } = await getNotificationsApi(params);
 
-      setNotifications(
-        Array.isArray(data) ? data.map(mapNotification) : []
-      );
+      const formatted = Array.isArray(data)
+        ? data.map((n) => ({
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            category: n.category,
+            unread: !n.is_read,
+            time: n.created_at
+              ? new Date(n.created_at).toLocaleString()
+              : "",
+          }))
+        : [];
+
+      setNotifications(formatted);
 
       if (showToast) {
         toast.success("Notifications updated", {
@@ -73,12 +96,8 @@ export default function Notifications() {
 
   /* ================= STORE CHANGE ================= */
   useEffect(() => {
-    if (role === "SUPER_ADMIN" && !storeId) return;
-
     setNotifications([]);
-
     fetchNotifications(!firstLoadRef.current);
-
     firstLoadRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
@@ -87,6 +106,7 @@ export default function Notifications() {
   const handleMarkRead = async (id) => {
     try {
       await markNotificationReadApi(id);
+
       setNotifications((prev) =>
         prev.map((n) =>
           n.id === id ? { ...n, unread: false } : n
@@ -94,27 +114,22 @@ export default function Notifications() {
       );
     } catch (error) {
       console.error("Mark read failed", error);
+      toast.error("Failed to mark as read");
     }
   };
 
-  const handleDismiss = (id) => {
-    // backend delete নেই → UI only
+  const handleDismiss = async (id) => {
+  try {
+    await deleteNotificationApi(id);
+
     setNotifications((prev) =>
       prev.filter((n) => n.id !== id)
     );
-  };
-
-  /* ================= GUARD ================= */
-  if (role === "SUPER_ADMIN" && !storeId) {
-    return (
-      <div className="p-10 text-center text-[#90A1B9]">
-        <h2 className="text-xl font-bold mb-2">
-          No store selected
-        </h2>
-        <p>Please select a store to view notifications.</p>
-      </div>
-    );
+  } catch (err) {
+    toast.error("Delete failed");
   }
+};
+
 
   /* ================= UI ================= */
   return (
@@ -125,18 +140,25 @@ export default function Notifications() {
         notifications={notifications}
       />
 
-      <div className="mt-8 space-y-1">
+      <div className="mt-8 space-y-3">
         {loading ? (
           <div className="text-center text-[#90A1B9] py-10">
             Loading notifications...
           </div>
         ) : notifications.length > 0 ? (
           notifications.map((notification) => (
-            <DetailedNotificationCard
+            <NotificationCard
               key={notification.id}
-              notification={notification}
-              onMarkRead={handleMarkRead}
-              onDismiss={handleDismiss}
+              title={notification.title}
+              message={notification.message}
+              time={notification.time}
+              unread={notification.unread}
+              onMarkRead={() =>
+                handleMarkRead(notification.id)
+              }
+              onDismiss={() =>
+                handleDismiss(notification.id)
+              }
             />
           ))
         ) : (

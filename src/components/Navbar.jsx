@@ -42,9 +42,14 @@ export default function Navbar() {
     try {
       setLoadingStores(true);
       const res = await getStoresApi();
+
       if (Array.isArray(res.data)) {
-        // console.log(res.data)
         setStores(res.data);
+
+        // ✅ AUTO SELECT FIRST STORE (ONLY IF NONE SELECTED)
+        if (!selectedStore && res.data.length > 0) {
+          selectStore(res.data[0]);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch stores", error);
@@ -144,7 +149,7 @@ export default function Navbar() {
 
       <button
         onClick={handleLogout}
-        className="bg-red-900 text-white py-3 rounded-xl cursor-pointer"
+        className="bg-red-900 text-white py-3 rounded-xl hover:bg-red-600 transition-all cursor-pointer"
       >
         Logout
       </button>

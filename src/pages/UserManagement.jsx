@@ -32,7 +32,7 @@ const BACKEND_URL = "http://172.252.13.97:8020";
 export default function UserManagement() {
   const { role, getActiveStoreId } =
     useContext(AuthContext);
-  const storeId = getActiveStoreId();
+  const storeId = getActiveStoreId() || 1;
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -150,28 +150,16 @@ export default function UserManagement() {
     }
   };
 
-  /* ================= GUARD ================= */
-  if (role === "SUPER_ADMIN" && !storeId) {
-    return (
-      <div className="flex items-center justify-center h-[60vh] text-[#90A1B9]">
-        <p>
-          Please select a store from the sidebar to
-          manage users.
-        </p>
-      </div>
-    );
-  }
-
   /* ================= UI ================= */
   return (
     <div className="p-6">
       {/* ADD USER */}
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-end mb-6 ">
         <button
           onClick={() =>
             setIsAddUserModalOpen(true)
           }
-          className="bg-[#1D293D] border border-[#2B7FFF33] text-white px-6 py-3 rounded-xl flex items-center gap-2"
+          className="bg-[#1D293D] border-2 border-[#2B7FFF33] text-blue-400 hover:bg-blue-500 hover:text-white px-6 py-3 rounded-xl flex items-center gap-2 cursor-pointer transition-all"
         >
           <Icon icon="mdi:plus" width={20} />
           Add New User
@@ -193,7 +181,7 @@ export default function UserManagement() {
           {users.map((user) => (
             <div
               key={user.id}
-              className="bg-[#0F172B60] border border-[#2B7FFF15] rounded-xl p-4 flex justify-between"
+              className="bg-[#0F172B60] border border-[#2B7FFF33] hover:bg-[#2B7FFF20] cursor-pointer rounded-xl p-4 flex justify-between"
             >
               <div className="flex items-center gap-4">
                 {user.profile_image ? (

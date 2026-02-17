@@ -60,7 +60,7 @@ export default function TimeSelector({ value, onChange, disabled = false }) {
       selectedPeriod
     );
 
-    onChange(time24); // ✅ backend-safe
+    onChange(time24); 
     setIsOpen(false);
   };
 
@@ -85,7 +85,7 @@ export default function TimeSelector({ value, onChange, disabled = false }) {
       {/* Display */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-[#1D293D] border border-[#2B7FFF15] rounded-lg px-3 py-2 text-white text-sm cursor-pointer hover:border-[#2B7FFF33] transition-all flex items-center justify-between"
+        className="bg-[#1D293D] border border-[#2B7FFF33] rounded-lg px-3 py-2 text-white text-sm cursor-pointer hover:border-[#2B7FFF33] transition-all flex items-center justify-between"
       >
         <span>
           {value === "---"
@@ -169,13 +169,13 @@ export default function TimeSelector({ value, onChange, disabled = false }) {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={handleCancel}
-                  className="flex-1 bg-[#1D293D] border border-[#2B7FFF15] text-white px-3 py-2 rounded-lg text-sm hover:bg-[#2B7FFF15] transition-all"
+                  className="flex-1 bg-[#1D293D] border border-[#2B7FFF15] text-white px-3 py-2 rounded-lg text-sm hover:bg-[#2B7FFF15] transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleApply}
-                  className="flex-1 bg-[#2B7FFF] text-white px-3 py-2 rounded-lg text-sm hover:bg-[#2B7FFF]/80 transition-all"
+                  className="flex-1 bg-[#2B7FFF] text-white px-3 py-2 rounded-lg text-sm hover:bg-[#2B7FFF]/80 transition-all cursor-pointer"
                 >
                   Apply
                 </button>

@@ -4,8 +4,6 @@ import toast from "react-hot-toast";
 import DashboardStatus from "../components/DashboardStatus";
 import DropDown from "../components/DropDown";
 import Graph from "../components/Graph";
-import NotificationCard from "../components/NotificatonCard";
-import TopRepairRequests from "../components/TopRepairRequests";
 
 import {
   getCallTrendsApi,
@@ -15,62 +13,70 @@ import {
 import { AuthContext } from "../provider/AuthContext";
 
 export default function Dashboard() {
-  const { role, getActiveStoreId, selectedStore } =
+  const { getActiveStoreId, selectedStore } =
     useContext(AuthContext);
 
-  const storeId = getActiveStoreId();
+  // ✅ DEFAULT STORE ID = 1 (if none selected)
+  const activeStoreId = getActiveStoreId() || 1;
 
   const [selectedTime, setSelectedTime] = useState("today");
   const [loading, setLoading] = useState(false);
 
-  const [trendData, setTrendData] = useState({});
+  const [trendData, setTrendData] = useState([]);
   const [totalCalls, setTotalCalls] = useState(0);
   const [storeSummary, setStoreSummary] = useState(null);
 
   const prevStoreRef = useRef(null);
 
+  // ✅ Backend supported range values
   const options = [
     { label: "Today", value: "today" },
-    { label: "Past Week", value: "past-week" },
-    { label: "Last Year", value: "last-year" },
+    { label: "This Week", value: "this-week" },
+    { label: "This Month", value: "this-month" },
+    { label: "This Year", value: "this-year" },
   ];
 
   /* ================= STORE CHANGE DETECT ================= */
   useEffect(() => {
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
-    // 🔥 only fire when store actually changes
-    if (prevStoreRef.current && prevStoreRef.current !== storeId) {
+    if (prevStoreRef.current && prevStoreRef.current !== activeStoreId) {
       toast.loading("Switching store...", { id: "store-change" });
     }
 
-    prevStoreRef.current = storeId;
-  }, [storeId]);
+    prevStoreRef.current = activeStoreId;
+  }, [activeStoreId]);
 
   /* ================= FETCH DASHBOARD ================= */
   useEffect(() => {
-    if (!storeId) return;
-    if (role === "SUPER_ADMIN" && !storeId) return;
+    if (!activeStoreId) return;
 
-    fetchDashboardData(storeId);
+    fetchDashboardData(activeStoreId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId, selectedTime]);
+  }, [activeStoreId, selectedTime]);
 
-  const fetchDashboardData = async (activeStoreId) => {
+  const fetchDashboardData = async (storeId) => {
     try {
       setLoading(true);
 
       const [trendRes, summaryRes] = await Promise.all([
-        getCallTrendsApi(activeStoreId, { range: selectedTime }),
-        getStoreSummaryApi(activeStoreId),
+        getCallTrendsApi(storeId, { range: selectedTime }),
+        getStoreSummaryApi(storeId, { range: selectedTime }),
       ]);
 
-      setTrendData(trendRes?.data?.trend || {});
+      // ✅ Backend trend structure
+      setTrendData(trendRes?.data?.trend || []);
       setTotalCalls(trendRes?.data?.total_calls || 0);
-      setStoreSummary(summaryRes?.data?.[0] || null);
+
+      // Backend summary returns object OR array[0]
+      const summaryData = Array.isArray(summaryRes?.data)
+        ? summaryRes?.data[0]
+        : summaryRes?.data;
+
+      setStoreSummary(summaryData || null);
 
       toast.success(
-        `Dashboard loaded for ${selectedStore?.name || "store"}`,
+        `Dashboard loaded for ${selectedStore?.name || "Store 1"}`,
         { id: "store-change" }
       );
     } catch (error) {
@@ -83,64 +89,54 @@ export default function Dashboard() {
     }
   };
 
-  /* ================= EMPTY STATE ================= */
-  if (role === "SUPER_ADMIN" && !storeId) {
-    return (
-      <div className="flex items-center justify-center h-[60vh] text-[#90A1B9]">
-        <p>Please select a store from the sidebar to view dashboard data.</p>
-      </div>
-    );
-  }
+  const getRangeLabel = () => {
+    const found = options.find((opt) => opt.value === selectedTime);
+    return found ? found.label : "Today";
+  };
 
   return (
     <div>
       {/* ================= STATUS CARDS ================= */}
       <div className="grid grid-cols-3 gap-6 pb-4">
         <DashboardStatus
-          title="Total Calls Today"
+          title="Total Calls"
           value={storeSummary?.total_calls ?? 0}
           icone="line-md:phone"
-          parsent={12}
           styls="from-[#00B8DB] to-[#2B7FFF]"
         />
 
         <DashboardStatus
           title="AI-Handled Calls"
-          value={storeSummary?.answered ?? 0}
+          value={storeSummary?.ai_handled ?? 0}
           icone="bx:bot"
-          parsent={77}
           styls="from-[#AD46FF] to-[#F6339A]"
         />
 
         <DashboardStatus
-          title="Warm Transfer"
-          value={storeSummary?.warm_transfer ?? 0}
+          title="Warm Transfers"
+          value={storeSummary?.warm_transfers ?? 0}
           icone="fluent:arrow-wrap-20-filled"
-          parsent={18}
           styls="from-[#FB2C36] to-[#FF6900]"
         />
 
         <DashboardStatus
           title="Appointments Booked"
-          value={storeSummary?.appointments ?? 0}
+          value={storeSummary?.appointments_booked ?? 0}
           icone="uil:schedule"
-          parsent={8}
           styls="from-[#00BC7D] to-[#00C950]"
         />
 
         <DashboardStatus
-          title="Missed/Failed Calls"
-          value={storeSummary?.missed ?? 0}
+          title="Missed Calls"
+          value={storeSummary?.missed_calls ?? 0}
           icone="oui:cross-in-circle-empty"
-          parsent={3}
           styls="from-[#FF2056] to-[#FB2C36]"
         />
 
         <DashboardStatus
           title="Avg Call Duration"
-          value={storeSummary?.avg_duration ?? "0:00"}
+          value={storeSummary?.avg_call_duration ?? 0}
           icone="teenyicons:stopwatch-outline"
-          parsent={15}
           styls="from-[#2B7FFF] to-[#615FFF]"
         />
       </div>
@@ -149,7 +145,9 @@ export default function Dashboard() {
       <div className="bg-[#0F172B80] border-2 border-[#2B7FFF33] p-8 rounded-2xl">
         <div className="flex items-center justify-between pb-6">
           <div>
-            <h3 className="text-xl">Call Trends - This Week</h3>
+            <h3 className="text-xl">
+              Call Trends - {getRangeLabel()}
+            </h3>
             <p className="text-sm text-[#90A1B9] pt-3">
               Total: {totalCalls} calls
             </p>
@@ -164,23 +162,6 @@ export default function Dashboard() {
 
         <Graph data={trendData} loading={loading} />
       </div>
-
-      {/* ================= BOTTOM SECTION ================= */}
-      {/* <div className="flex items-stretch justify-center gap-x-8 mt-8">
-        <div className="bg-[#0F172B80] border-2 border-[#2B7FFF33] p-8 rounded-2xl w-1/2">
-          <h2 className="text-xl mb-4">Recent Activity</h2>
-
-          <NotificationCard
-            title="No recent activity"
-            time="—"
-            style="bg-[#64748B]"
-          />
-        </div>
-
-        <div className="w-1/2">
-          <TopRepairRequests />
-        </div>
-      </div> */}
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { AuthContext } from "../provider/AuthContext";
 
 export default function AddPriceModal({ onClose, onSuccess }) {
   const { getActiveStoreId } = useContext(AuthContext);
-  const storeId = getActiveStoreId(); // 🔥 GLOBAL STORE
+  const storeId = getActiveStoreId();
 
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -70,7 +70,7 @@ export default function AddPriceModal({ onClose, onSuccess }) {
       setLoading(true);
 
       await createPriceApi({
-        store: storeId,            
+        store: storeId,
         device_model: form.model,
         repair_type: form.repairType,
         price: Number(form.price),
@@ -81,29 +81,41 @@ export default function AddPriceModal({ onClose, onSuccess }) {
       onSuccess();
       onClose();
     } catch (err) {
-      console.error(err?.response?.data || err);
       toast.error("Failed to add price");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= UI ================= */
+  /* ================= COMMON INPUT STYLE ================= */
+  const inputStyle =
+    "w-full bg-[#0F172B] border border-[#2B7FFF33] text-white rounded-lg px-4 py-2 focus:outline-none focus:border-[#2B7FFF]";
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-[#1D293D] p-8 rounded-xl w-full max-w-3xl">
-        <h3 className="text-white text-xl mb-6">Add New Price</h3>
+        <h3 className="text-white text-xl mb-6">
+          Add New Price
+        </h3>
 
         <div className="grid grid-cols-2 gap-4">
+
           <select
             value={form.category}
             onChange={(e) =>
               setForm({ ...form, category: e.target.value })
             }
+            className={inputStyle}
           >
-            <option value="">Select Category</option>
+            <option value="" className="text-white">
+              Select Category
+            </option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>
+              <option
+                key={c.id}
+                value={c.id}
+                className="text-white"
+              >
                 {c.name}
               </option>
             ))}
@@ -114,10 +126,17 @@ export default function AddPriceModal({ onClose, onSuccess }) {
             onChange={(e) =>
               setForm({ ...form, brand: e.target.value })
             }
+            className={inputStyle}
           >
-            <option value="">Select Brand</option>
+            <option value="" className="text-white">
+              Select Brand
+            </option>
             {brands.map((b) => (
-              <option key={b.id} value={b.id}>
+              <option
+                key={b.id}
+                value={b.id}
+                className="text-white"
+              >
                 {b.name}
               </option>
             ))}
@@ -128,10 +147,17 @@ export default function AddPriceModal({ onClose, onSuccess }) {
             onChange={(e) =>
               setForm({ ...form, model: e.target.value })
             }
+            className={inputStyle}
           >
-            <option value="">Select Model</option>
+            <option value="" className="text-white">
+              Select Model
+            </option>
             {models.map((m) => (
-              <option key={m.id} value={m.id}>
+              <option
+                key={m.id}
+                value={m.id}
+                className="text-white"
+              >
                 {m.name}
               </option>
             ))}
@@ -140,12 +166,22 @@ export default function AddPriceModal({ onClose, onSuccess }) {
           <select
             value={form.repairType}
             onChange={(e) =>
-              setForm({ ...form, repairType: e.target.value })
+              setForm({
+                ...form,
+                repairType: e.target.value,
+              })
             }
+            className={inputStyle}
           >
-            <option value="">Select Repair Type</option>
+            <option value="" className="text-white">
+              Select Repair Type
+            </option>
             {repairTypes.map((r) => (
-              <option key={r.id} value={r.id}>
+              <option
+                key={r.id}
+                value={r.id}
+                className="text-white"
+              >
                 {r.name}
               </option>
             ))}
@@ -156,18 +192,30 @@ export default function AddPriceModal({ onClose, onSuccess }) {
             placeholder="Price"
             value={form.price}
             onChange={(e) =>
-              setForm({ ...form, price: e.target.value })
+              setForm({
+                ...form,
+                price: e.target.value,
+              })
             }
+            className={inputStyle}
           />
 
           <select
             value={form.status}
             onChange={(e) =>
-              setForm({ ...form, status: e.target.value })
+              setForm({
+                ...form,
+                status: e.target.value,
+              })
             }
+            className={inputStyle}
           >
-            <option value="ACTIVE">Active</option>
-            <option value="DISABLED">Disabled</option>
+            <option value="ACTIVE" className="text-white">
+              Active
+            </option>
+            <option value="DISABLED" className="text-white">
+              Disabled
+            </option>
           </select>
         </div>
 
@@ -175,14 +223,14 @@ export default function AddPriceModal({ onClose, onSuccess }) {
           <button
             disabled={loading}
             onClick={handleSubmit}
-            className="flex-1 bg-[#05DF72] py-2 rounded hover:bg-[#05DF72CC]"
+            className="flex-1 bg-[#05DF72] text-white py-2 rounded hover:bg-[#05DF72CC] cursor-pointer"
           >
             {loading ? "Saving..." : "Save"}
           </button>
 
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-600 py-2 rounded hover:bg-gray-500"
+            className="flex-1 bg-gray-600 text-white py-2 rounded hover:bg-gray-500 cursor-pointer"
           >
             Cancel
           </button>

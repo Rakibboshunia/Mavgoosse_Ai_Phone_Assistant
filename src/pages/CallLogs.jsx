@@ -18,7 +18,8 @@ export default function CallLogs() {
   const { role, getActiveStoreId, selectedStore } =
     useContext(AuthContext);
 
-  const storeId = getActiveStoreId();
+  // ✅ DEFAULT STORE ID = 1
+  const activeStoreId = getActiveStoreId() || 1;
 
   const [calls, setCalls] = useState([]);
   const [selectedCall, setSelectedCall] = useState(null);
@@ -29,30 +30,29 @@ export default function CallLogs() {
 
   /* ================= STORE CHANGE DETECT ================= */
   useEffect(() => {
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
     if (
       prevStoreRef.current &&
-      prevStoreRef.current !== storeId
+      prevStoreRef.current !== activeStoreId
     ) {
       toast.loading("Loading call logs for new store...", {
         id: "calllogs-store",
       });
     }
 
-    prevStoreRef.current = storeId;
-  }, [storeId]);
+    prevStoreRef.current = activeStoreId;
+  }, [activeStoreId]);
 
   /* ================= FETCH CALLS ================= */
   const fetchCalls = async (params = {}) => {
-    if (role === "SUPER_ADMIN" && !storeId) return;
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
     try {
       setLoading(true);
 
       const res = await getCallLogsApi({
-        store: storeId, // 🔥 STORE SCOPED
+        store: activeStoreId, // 🔥 STORE SCOPED
         ...params,
       });
 
@@ -69,7 +69,7 @@ export default function CallLogs() {
       }
 
       toast.success(
-        `Call logs loaded for ${selectedStore?.name || "store"}`,
+        `Call logs loaded for ${selectedStore?.name || "Store 1"}`,
         { id: "calllogs-store" }
       );
     } catch (err) {
@@ -84,7 +84,7 @@ export default function CallLogs() {
 
   /* ================= INITIAL + STORE CHANGE ================= */
   useEffect(() => {
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
     // reset on store change
     firstLoadRef.current = true;
@@ -93,16 +93,7 @@ export default function CallLogs() {
 
     fetchCalls();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId]);
-
-  /* ================= EMPTY STATE ================= */
-  if (role === "SUPER_ADMIN" && !storeId) {
-    return (
-      <div className="flex items-center justify-center h-[60vh] text-[#90A1B9]">
-        <p>Please select a store from the sidebar to view call logs.</p>
-      </div>
-    );
-  }
+  }, [activeStoreId]);
 
   return (
     <div className="p-2">

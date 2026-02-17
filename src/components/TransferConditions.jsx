@@ -54,7 +54,7 @@ export default function TransferConditions({ rules = [] }) {
           <div
             key={condition.id}
             onClick={() => toggleCondition(condition.id)}
-            className="flex items-center justify-between p-5 bg-[#1D293D80] border border-[#2B7FFF10] rounded-xl cursor-pointer hover:border-[#2B7FFF40]"
+            className="flex items-center justify-between p-5 bg-[#1D293D80] border border-[#2B7FFF33] rounded-xl cursor-pointer hover:bg-[#2B7FFF33]"
           >
             <span className="text-white opacity-80">
               {condition.description || condition.condition}

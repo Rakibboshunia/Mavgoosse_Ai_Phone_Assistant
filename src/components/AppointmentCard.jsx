@@ -66,7 +66,7 @@ export default function AppointmentCard({ appointment, onCancel }) {
       {appointment.status === "pending" && (
         <button
           onClick={() => onCancel(appointment.id)}
-          className="w-full bg-[#FF205620] hover:bg-[#FF205630] text-[#FF2056] border border-[#FF205633] py-3 rounded-xl font-medium transition-colors"
+          className="w-full bg-[#FF205620] hover:bg-[#FF205630] text-[#FF2056] border border-[#FF205633] py-3 rounded-xl font-medium transition-colors cursor-pointer"
         >
           Cancel Appointment
         </button>

@@ -20,7 +20,8 @@ export default function CallTransfer() {
   const { role, getActiveStoreId, selectedStore } =
     useContext(AuthContext);
 
-  const storeId = getActiveStoreId();
+  // ✅ DEFAULT STORE ID = 1
+  const activeStoreId = getActiveStoreId() || 1;
 
   const [contacts, setContacts] = useState([]);
   const [rules, setRules] = useState([]);
@@ -30,27 +31,26 @@ export default function CallTransfer() {
 
   /* ================= STORE CHANGE DETECT ================= */
   useEffect(() => {
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
     if (
       prevStoreRef.current &&
-      prevStoreRef.current !== storeId
+      prevStoreRef.current !== activeStoreId
     ) {
       toast.loading("Loading call transfer settings...", {
         id: "calltransfer-store",
       });
     }
 
-    prevStoreRef.current = storeId;
-  }, [storeId]);
+    prevStoreRef.current = activeStoreId;
+  }, [activeStoreId]);
 
   /* ================= FETCH CONTACTS ================= */
   const fetchContacts = async () => {
-    if (role === "SUPER_ADMIN" && !storeId) return;
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
     const res = await getTransferContactsApi({
-      store: storeId,
+      store: activeStoreId,
     });
 
     return Array.isArray(res.data) ? res.data : [];
@@ -58,11 +58,10 @@ export default function CallTransfer() {
 
   /* ================= FETCH RULES ================= */
   const fetchRules = async () => {
-    if (role === "SUPER_ADMIN" && !storeId) return;
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
     const res = await getCallTransferRulesApi({
-      store: storeId,
+      store: activeStoreId,
     });
 
     return Array.isArray(res.data) ? res.data : [];
@@ -84,7 +83,7 @@ export default function CallTransfer() {
 
       toast.success(
         `Call transfer loaded for ${
-          selectedStore?.name || "store"
+          selectedStore?.name || "Store 1"
         }`,
         { id: "calltransfer-store" }
       );
@@ -100,27 +99,14 @@ export default function CallTransfer() {
 
   /* ================= INITIAL + STORE CHANGE ================= */
   useEffect(() => {
-    if (!storeId) return;
+    if (!activeStoreId) return;
 
-    // reset on store change
     setContacts([]);
     setRules([]);
 
     loadTransferData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId]);
-
-  /* ================= EMPTY STATE ================= */
-  if (role === "SUPER_ADMIN" && !storeId) {
-    return (
-      <div className="flex items-center justify-center h-[60vh] text-[#90A1B9]">
-        <p>
-          Please select a store from the sidebar to manage
-          call transfers.
-        </p>
-      </div>
-    );
-  }
+  }, [activeStoreId]);
 
   return (
     <div className="space-y-8">

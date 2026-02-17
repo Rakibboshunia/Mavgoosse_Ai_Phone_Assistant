@@ -59,7 +59,7 @@ const fromBusinessHoursArray = (arr = []) => {
 
 export default function AISettings() {
   const { getActiveStoreId } = useContext(AuthContext);
-  const storeId = getActiveStoreId();
+  const storeId = getActiveStoreId() || 1;
 
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -212,24 +212,11 @@ export default function AISettings() {
     });
   };
 
-  /* ================= UI ================= */
-
-  if (!storeId) {
-    return (
-      <div className="p-10 text-center text-white">
-        <h2 className="text-xl font-bold mb-2">
-          No store selected
-        </h2>
-        <p>Please select a store to configure AI behavior.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 space-y-8">
       {/* Greetings */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-[#1D293D80] p-6 rounded-2xl">
+        <div className="bg-[#1D293D80] border-2 border-[#2B7FFF33] p-6 rounded-2xl">
           <h2 className="text-white font-bold mb-4">
             Greeting Scripts
           </h2>
@@ -241,7 +228,7 @@ export default function AISettings() {
                 opening: e.target.value,
               })
             }
-            className="w-full mb-3 p-4 rounded-xl"
+            className="w-full mb-3 p-4 rounded-xl border border-[#2B7FFF33]"
             placeholder="Opening greeting"
           />
           <textarea
@@ -252,19 +239,19 @@ export default function AISettings() {
                 closed: e.target.value,
               })
             }
-            className="w-full p-4 rounded-xl"
+            className="w-full p-4 rounded-xl border border-[#2B7FFF33]"
             placeholder="Closed message"
           />
         </div>
 
         {/* Tone */}
-        <div className="bg-[#1D293D80] p-6 rounded-2xl">
+        <div className="bg-[#1D293D80] border-2 border-[#2B7FFF33] p-6 rounded-2xl">
           <h2 className="text-white font-bold mb-4">Tone</h2>
-          {["Friendly", "Professional", "Sales"].map((t) => (
+          {["friendly", "professional", "sales"].map((t) => (
             <button
               key={t}
               onClick={() => setTone(t)}
-              className={`block w-full mb-2 p-3 rounded-xl cursor-pointer hover:bg-slate-700 ${
+              className={`block w-full mb-2 p-3 rounded-xl cursor-pointer hover:bg-[#2B7FFF33] border border-[#2B7FFF33] ${
                 tone === t
                   ? "bg-blue-600 text-white"
                   : "bg-slate-800 text-gray-400"
@@ -274,10 +261,11 @@ export default function AISettings() {
             </button>
           ))}
         </div>
+
       </div>
 
       {/* Business Hours */}
-      <div className="bg-[#1D293D80] p-6 rounded-2xl">
+      <div className="bg-[#1D293D80] border-2 border-[#2B7FFF33] p-6 rounded-2xl">
         <h2 className="text-white font-bold mb-4">
           Business Hours
         </h2>
@@ -313,7 +301,7 @@ export default function AISettings() {
       </div>
 
       {/* Escalation */}
-      <div className="bg-[#1D293D80] p-6 rounded-2xl">
+      <div className="bg-[#1D293D80] border-2 border-[#2B7FFF33] p-6 rounded-2xl">
         <h2 className="text-white font-bold mb-4">
           Escalation Rules
         </h2>
@@ -326,7 +314,7 @@ export default function AISettings() {
               retryAttempts: Number(e.target.value),
             })
           }
-          className="mb-4 p-2 rounded-xl bg-gray-700 text-white cursor-pointer hover:bg-gray-600"
+          className="mb-4 p-2 rounded-xl text-white cursor-pointer hover:bg-[#2B7FFF33] border border-[#2B7FFF33]"
         >
           {[1, 2, 3, 4, 5].map((n) => (
             <option key={n} value={n}>
@@ -343,7 +331,7 @@ export default function AISettings() {
               fallbackResponse: e.target.value,
             })
           }
-          className="w-full mb-4 p-4 rounded-xl"
+          className="w-full mb-4 p-4 rounded-xl border border-[#2B7FFF33]"
           placeholder="Fallback response"
         />
 
@@ -351,7 +339,7 @@ export default function AISettings() {
           <input
             value={newKeyword}
             onChange={(e) => setNewKeyword(e.target.value)}
-            className="flex-1 p-3 rounded-xl"
+            className="flex-1 p-3 rounded-xl border border-[#2B7FFF33]"
             placeholder="Add keyword"
           />
           <button
