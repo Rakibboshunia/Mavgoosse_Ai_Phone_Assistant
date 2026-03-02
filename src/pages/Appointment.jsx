@@ -18,7 +18,6 @@ export default function Appointment() {
   const { selectedStore, getActiveStoreId } =
     useContext(AuthContext);
 
-  // ✅ DEFAULT STORE ID = 1
   const activeStoreId =
     getActiveStoreId?.() || selectedStore?.id || 1;
 
