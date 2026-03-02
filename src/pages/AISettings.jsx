@@ -8,7 +8,6 @@ import {
   updateAIBehaviorApi,
 } from "../libs/aiBehavior.api";
 
-/* ================= Helper Transformers ================= */
 
 const dayMap = {
   monday: 0,
@@ -55,7 +54,6 @@ const fromBusinessHoursArray = (arr = []) => {
   return base;
 };
 
-/* ================= Component ================= */
 
 export default function AISettings() {
   const { getActiveStoreId } = useContext(AuthContext);
@@ -90,8 +88,6 @@ export default function AISettings() {
   const [newKeyword, setNewKeyword] = useState("");
 
   const firstLoadRef = useRef(true);
-
-  /* ================= LOAD CONFIG ================= */
 
   useEffect(() => {
     if (!storeId) return;
